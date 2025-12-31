@@ -13,11 +13,15 @@
   --color-textLightGrey: #0F172414;
   --color-textOrange: #FF7A00;
   --color-textBlack: #0F1724;
-  
+  --color-red: #fb2c36  ;
+  --color-darkRed: #B91C1C; 
+  --color-lightRed: #FEF2F2;
+ 
   /* Input Backgrounds */
   --color-inputBg: #F5F6F8;
   --color-inputBgAlt: #EAF2FA;
   --color-iconBg: #FFF5EB;
+  --color-primarydark: #0F1724;
 }
 
 @theme inline {
@@ -32,6 +36,10 @@
   --color-inputBg: var(--color-inputBg);
   --color-inputBgAlt: var(--color-inputBgAlt);
   --color-iconBg: var(--color-iconBg);
+  --color-red: var(--color-red);
+  --color-darkRed: var(--color-darkRed);
+    --color-lightRed: var(--color-lightRed);
+    --color-primarydark: var(--color-primarydark);
 }
 
 @media (prefers-color-scheme: dark) {

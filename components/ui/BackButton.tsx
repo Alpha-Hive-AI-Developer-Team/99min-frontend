@@ -24,7 +24,7 @@ const BackButton: React.FC<BackButtonProps> = ({
   );
 
   const buttonClasses = variant === 'circular'
-    ? `w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full transition-colors border border-gray-100 ${className}`
+    ? `w-10 h-10 flex items-center justify-center   rounded-full transition-colors  ${className}`
     : `p-1 -ml-1 hover:bg-gray-100 rounded-full transition-colors ${className}`;
 
   if (href) {

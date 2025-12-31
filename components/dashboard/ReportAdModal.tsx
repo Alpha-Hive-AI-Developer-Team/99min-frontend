@@ -1,0 +1,163 @@
+"use client";
+
+import React, { useState, useRef, useEffect } from 'react';
+import { X, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui';
+
+interface ReportAdModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit?: (reason: string, details: string) => void;
+}
+
+const reportReasons = [
+  'Spam or misleading',
+  'Inappropriate content',
+  'Scam or fraud',
+  'Duplicate posting',
+  'Violates terms of service',
+  'Other',
+];
+
+const ReportAdModal: React.FC<ReportAdModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+}) => {
+  const [selectedReason, setSelectedReason] = useState<string>('');
+  const [details, setDetails] = useState('');
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  const handleSubmit = () => {
+    if (selectedReason && onSubmit) {
+      onSubmit(selectedReason, details);
+    }
+    // Reset form
+    setSelectedReason('');
+    setDetails('');
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Blurred Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal Dialog */}
+      <div
+        ref={modalRef}
+        className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-primarydark">Report Ad</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-primarydark" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Informational Banner */}
+          <div className="bg-lightRed border border-red rounded-xl p-4 mb-6 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-darkRed shrink-0 mt-0.5" />
+            <p className="text-sm text-darkRed leading-relaxed">
+              Protect our community. Reports are anonymous and help us maintain a safe marketplace.
+            </p>
+          </div>
+
+          {/* What's wrong section */}
+          <div className="mb-6">
+            <h3 className="text-primarydark font-bold text-base mb-4">
+              What's wrong with this ad?
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {reportReasons.map((reason) => {
+                const isSelected = selectedReason === reason;
+                return (
+                  <button
+                    key={reason}
+                    onClick={() => setSelectedReason(reason)}
+                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-colors text-left
+                      ${
+                        isSelected
+                          ? 'bg-lightRed border-2 border-red text-darkRed'
+                          : 'bg-white border border-gray-200 text-primarydark hover:bg-gray-50'
+                      }`}
+                  >
+                    {reason}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tell us more section */}
+          <div className="mb-6">
+            <h3 className="text-primarydark font-bold text-base mb-3">
+              Tell us more (optional)
+            </h3>
+            <textarea
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              placeholder="Share specific details about the issue..."
+              className="w-full h-32 px-4 py-3 bg-inputBg rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-orange focus:bg-white transition-all text-textBlack placeholder:text-textGray resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 p-6 border-t border-gray-200">
+          <Button
+            variant="secondary"
+            size="md"
+            fullWidth
+            onClick={onClose}
+            className="border border-gray-200"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            fullWidth
+            onClick={handleSubmit}
+            disabled={!selectedReason}
+            className="bg-red hover:bg-red disabled:bg-lightGrey disabled:cursor-not-allowed"
+          >
+            Report Ad
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ReportAdModal;
+
