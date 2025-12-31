@@ -3,13 +3,35 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Custom Colors */
+  --color-orange: #FF7A00;
+  --color-orangeHover: #E67300;
+  --color-lightGrey: #0F172414;
+  --color-gray: #6B7280;
+  --color-textGray: #6B7280;
+  --color-textLightGrey: #0F172414;
+  --color-textOrange: #FF7A00;
+  --color-textBlack: #0F1724;
+  
+  /* Input Backgrounds */
+  --color-inputBg: #F5F6F8;
+  --color-inputBgAlt: #EAF2FA;
+  --color-iconBg: #FFF5EB;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-orange: var(--color-orange);
+  --color-orangeHover: var(--color-orangeHover);
+  --color-lightGrey: var(--color-lightGrey);
+  --color-gray: var(--color-gray);
+  --color-textGray: var(--color-textGray);
+  --color-textLightGrey: var(--color-textLightGrey);
+  --color-textOrange: var(--color-textOrange);
+  --color-textBlack: var(--color-textBlack);
+  --color-inputBg: var(--color-inputBg);
+  --color-inputBgAlt: var(--color-inputBgAlt);
+  --color-iconBg: var(--color-iconBg);
 }
 
 @media (prefers-color-scheme: dark) {
