@@ -93,9 +93,11 @@ const Navbar: React.FC = () => {
               {/* Notification badge can be added here */}
             </button>
             
-            <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
-              <User className="w-5 h-5 text-textGray" />
-            </button>
+            <Link href="/dashboard/settings">
+              <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                <User className="w-5 h-5 text-textGray" />
+              </button>
+            </Link>
 
             {/* Mobile Menu Button */}
             <button
