@@ -16,6 +16,8 @@
   --color-red: #fb2c36  ;
   --color-darkRed: #B91C1C; 
   --color-lightRed: #FEF2F2;
+  --color-green: #16A34A;
+  --color-lightGreen: #E8F5E9;
  
   /* Input Backgrounds */
   --color-inputBg: #F5F6F8;
@@ -40,13 +42,15 @@
   --color-darkRed: var(--color-darkRed);
     --color-lightRed: var(--color-lightRed);
     --color-primarydark: var(--color-primarydark);
+    --color-green: var(--color-green);
+    --color-lightGreen: var(--color-lightGreen);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-  }
+  } 
 }
 
 body {

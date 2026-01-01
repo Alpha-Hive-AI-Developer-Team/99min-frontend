@@ -10,6 +10,8 @@ export const colors = {
   red: "#fb2c36 ",
   darkRed: "#b91c1c",  
   lightRed: "#FEF2F2",
+  green: "#16A34A",
+  lightGreen: "#E8F5E9",
 };
 
 // CSS variable names - use these with var() in CSS or inline styles
@@ -29,6 +31,8 @@ export const colorVars = {
   red: "var(--color-red)",
   darkRed: "var(--color-darkRed)",
   lightRed: "var(--color-lightRed)",
+  green: "var(--color-green)",
+  lightGreen: "var(--color-lightGreen)",
 };
 
 // Tailwind class names - use these as className strings
@@ -48,4 +52,6 @@ export const colorClasses = {
   inputBg: "bg-inputBg",
   inputBgAlt: "bg-inputBgAlt",
   iconBg: "bg-iconBg",
+  green: "bg-green",
+  lightGreen: "bg-lightGreen",
 };

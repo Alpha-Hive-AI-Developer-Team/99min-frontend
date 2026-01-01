@@ -50,16 +50,16 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
   } = task;
 
   return (
-    <div className="min-h-screen bg-inputBg">
+    <div className="min-h-screen bg-white">
       <TaskDetailsHeader
         onBack={onBack}
         onReport={() => setIsReportModalOpen(true)}
         onShare={() => setIsShareModalOpen(true)}
       />
 
-      <div className="max-w-4xl mx-auto pb-24">
-        <div className="relative w-full h-80 mb-0">
-          <img src={dog.src} alt={title} className="w-full h-full object-cover" />
+      <div className="max-w-7xl mx-auto pb-24">
+        <div className="relative  w-full h-96 mb-0">
+          <img src={dog.src} alt={title} className="w-full h-full object-cover rounded-b-4xl" />
         </div>
 
         <TaskHeader

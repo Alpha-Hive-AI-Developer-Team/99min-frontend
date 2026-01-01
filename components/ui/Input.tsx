@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, ReactNode } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -6,6 +6,8 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   variant?: 'default' | 'alt';
   showPasswordToggle?: boolean;
   error?: string;
+  icon?: ReactNode;
+  iconPosition?: 'left' | 'right';
 }
 
 const Input: React.FC<InputProps> = ({
@@ -14,6 +16,8 @@ const Input: React.FC<InputProps> = ({
   type = 'text',
   showPasswordToggle = false,
   error,
+  icon,
+  iconPosition = 'left',
   className = '',
   id,
   ...props
@@ -37,6 +41,22 @@ const Input: React.FC<InputProps> = ({
       ? 'border-0' 
       : 'border border-gray-200';
 
+  // Handle padding for icons and password toggle
+  let leftPadding = '';
+  let rightPadding = '';
+  
+  if (icon && iconPosition === 'left') {
+    leftPadding = 'pl-10';
+  }
+  
+  if (icon && iconPosition === 'right' && !(showPasswordToggle && type === 'password')) {
+    rightPadding = 'pr-10';
+  } else if (showPasswordToggle && type === 'password') {
+    rightPadding = 'pr-10';
+  }
+  
+  const paddingClasses = `${leftPadding} ${rightPadding}`;
+
   return (
     <div className="mb-4">
       {label && (
@@ -48,12 +68,22 @@ const Input: React.FC<InputProps> = ({
         </label>
       )}
       <div className="relative">
+        {icon && iconPosition === 'left' && (
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-textGray">
+            {icon}
+          </div>
+        )}
         <input
           id={inputId}
           type={inputType}
-          className={`${baseClasses} ${variantClasses[variant]} ${borderClass} ${className} ${showPasswordToggle ? 'pr-10' : ''}`}
+          className={`${baseClasses} ${variantClasses[variant]} ${borderClass} ${paddingClasses} ${className}`}
           {...props}
         />
+        {icon && iconPosition === 'right' && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-textGray">
+            {icon}
+          </div>
+        )}
         {showPasswordToggle && type === 'password' && (
           <button
             type="button"

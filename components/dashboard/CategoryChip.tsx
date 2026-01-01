@@ -1,4 +1,5 @@
 import React from 'react';
+import CategoryButton from '@/components/shared/CategoryButton';
 
 interface CategoryChipProps {
   label: string;
@@ -14,17 +15,13 @@ const CategoryChip: React.FC<CategoryChipProps> = ({
   onClick 
 }) => {
   return (
-    <button
+    <CategoryButton
+      label={label}
+      icon={icon}
+      active={active}
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-colors whitespace-nowrap
-        ${active 
-          ? 'bg-orange text-white' 
-          : 'bg-white text-textBlack border border-gray-200 hover:bg-gray-50'
-        }`}
-    >
-      {icon}
-      {label}
-    </button>
+      variant="rounded"
+    />
   );
 };
 

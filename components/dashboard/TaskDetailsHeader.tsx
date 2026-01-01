@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, MoreVertical } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
+import PageHeader from '@/components/shared/PageHeader';
 import TaskDetailsMenu from './TaskDetailsMenu';
 
 interface TaskDetailsHeaderProps {
@@ -36,33 +37,25 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({ onBack, onReport,
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 sticky top-20 z-30">
-      <div className="max-w-4xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+    <PageHeader
+      title="Task Details"
+      onBack={onBack}
+      maxWidth="7xl"
+      rightContent={
+        <div className="relative" ref={menuRef}>
           <button
-            onClick={onBack}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-6 h-6 text-textBlack" />
+            <MoreVertical className="w-6 h-6 text-textBlack" />
           </button>
 
-          <h1 className="text-lg font-bold text-textBlack">Task Details</h1>
-
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <MoreVertical className="w-6 h-6 text-textBlack" />
-            </button>
-
-            {isMenuOpen && (
-              <TaskDetailsMenu onReport={handleReport} onShare={handleShare} />
-            )}
-          </div>
+          {isMenuOpen && (
+            <TaskDetailsMenu onReport={handleReport} onShare={handleShare} />
+          )}
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 };
 
