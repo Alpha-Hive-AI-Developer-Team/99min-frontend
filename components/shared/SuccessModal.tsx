@@ -90,7 +90,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
         </div>
 
         {/* Title */}
-        <h2 className="text-2xl font-extrabold text-textBlack text-center mb-3 leading-tight">
+        <h2 className="text-2xl font-extrabold text-textBlack text-center mb-3 ">
           {title}
         </h2>
 

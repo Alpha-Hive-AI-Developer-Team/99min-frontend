@@ -12,6 +12,7 @@ import ProfilePage from '@/components/settings/ProfilePage';
 import NotificationsPage from '@/components/settings/NotificationsPage';
 import LocationPage from '@/components/settings/LocationPage';
 import PrivacyPage from '@/components/settings/PrivacyPage';
+import HelpCenterPage from '@/components/settings/HelpCenterPage';
 import { User, Bell, MapPin, CreditCard, Shield, HelpCircle, Lock } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
@@ -20,6 +21,7 @@ const SettingsPage: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
 
   const handleLogout = () => {
     // Handle logout logic here
@@ -67,6 +69,15 @@ const SettingsPage: React.FC = () => {
     return (
       <DashboardLayout>
         <PrivacyPage onBack={() => setShowPrivacy(false)} />
+      </DashboardLayout>
+    );
+  }
+
+  // Show Help Center page if showHelpCenter is true
+  if (showHelpCenter) {
+    return (
+      <DashboardLayout>
+        <HelpCenterPage onBack={() => setShowHelpCenter(false)} />
       </DashboardLayout>
     );
   }
@@ -133,7 +144,7 @@ const SettingsPage: React.FC = () => {
               <SettingsItem
                 icon={<HelpCircle className="w-5 h-5" />}
                 label="Help Center"
-                onClick={() => console.log('Help Center clicked')}
+                onClick={() => setShowHelpCenter(true)}
               />
             </div>
             <div className="px-4">
