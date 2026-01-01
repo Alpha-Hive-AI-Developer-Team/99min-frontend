@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { MapPin, Tag, MessageCircle, LucideIcon } from 'lucide-react';
+import { MapPin, Tag, MessageCircle, LucideIcon, MessageSquare } from 'lucide-react';
 import TaskDetailCard from './TaskDetailCard';
 
 interface TaskDetailCardsProps {
@@ -29,7 +29,7 @@ const TaskDetailCards: React.FC<TaskDetailCardsProps> = ({ location, category, i
       value: category,
     },
     {
-      icon: MessageCircle,
+      icon: MessageSquare ,
       label: 'Responses',
       value: `${interest} active`,
     },

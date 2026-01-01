@@ -20,7 +20,7 @@ const NotificationsPage: React.FC = () => {
     {
       id: '2',
       type: 'message',
-      icon: <MessageSquare className="w-5 h-5 text-orange" />,
+      icon: <MessageSquare className="w-5 h-5 text-blue-500" />,
       iconBgColor: 'bg-[#FFF5EB]',
       title: 'New message',
       description: 'You have a new message in "Quick photo editing needed"',
