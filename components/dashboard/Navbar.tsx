@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, MessageCircle, Bell, User, Menu, X } from 'lucide-react';
+import { Search, MessageCircle, Bell, User, Menu, X, MessageSquare } from 'lucide-react';
 import TicketBadge from './TicketBadge';
 import LanguageDropdown from './LanguageDropdown';
 
@@ -52,10 +52,10 @@ const Navbar: React.FC = () => {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`font-medium text-sm transition-colors relative pb-1
+                  className={`text-sm transition-colors relative pb-1
                     ${isActive 
-                      ? 'text-orange' 
-                      : 'text-textGray hover:text-textBlack'
+                      ? 'text-textBlack font-bold' 
+                      : 'text-textGray hover:text-textBlack font-medium'
                     }`}
                 >
                   {link.label}
@@ -85,17 +85,19 @@ const Navbar: React.FC = () => {
 
             {/* Action Icons - Hide some on mobile */}
             <button className="hidden sm:block p-2 hover:bg-gray-50 rounded-lg transition-colors">
-              <MessageCircle className="w-5 h-5 text-textGray" />
+              <MessageSquare className="w-5 h-5 text-textGray" />
             </button>
             
-            <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors relative">
-              <Bell className="w-5 h-5 text-textGray" />
-              {/* Notification badge can be added here */}
-            </button>
+            <Link href="/dashboard/notifications">
+              <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors relative">
+                <Bell className={`w-5 h-5 ${pathname === '/dashboard/notifications' ? 'text-orange' : 'text-textGray'}`} />
+                {/* Notification badge can be added here */}
+              </button>
+            </Link>
             
             <Link href="/dashboard/settings">
               <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                <User className="w-5 h-5 text-textGray" />
+                <User className={`w-5 ${pathname === '/dashboard/settings' ? 'text-orange' : 'text-textGray'} h-5 `} />
               </button>
             </Link>
 

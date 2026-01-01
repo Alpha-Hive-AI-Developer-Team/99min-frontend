@@ -11,6 +11,7 @@ import LogOutButton from '@/components/settings/LogOutButton';
 import ProfilePage from '@/components/settings/ProfilePage';
 import NotificationsPage from '@/components/settings/NotificationsPage';
 import LocationPage from '@/components/settings/LocationPage';
+import PrivacyPage from '@/components/settings/PrivacyPage';
 import { User, Bell, MapPin, CreditCard, Shield, HelpCircle, Lock } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
@@ -18,6 +19,7 @@ const SettingsPage: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const handleLogout = () => {
     // Handle logout logic here
@@ -56,6 +58,15 @@ const SettingsPage: React.FC = () => {
     return (
       <DashboardLayout>
         <LocationPage onBack={() => setShowLocation(false)} />
+      </DashboardLayout>
+    );
+  }
+
+  // Show Privacy page if showPrivacy is true
+  if (showPrivacy) {
+    return (
+      <DashboardLayout>
+        <PrivacyPage onBack={() => setShowPrivacy(false)} />
       </DashboardLayout>
     );
   }
@@ -129,7 +140,7 @@ const SettingsPage: React.FC = () => {
               <SettingsItem
                 icon={<Lock className="w-5 h-5" />}
                 label="Privacy & Safety"
-                onClick={() => console.log('Privacy & Safety clicked')}
+                onClick={() => setShowPrivacy(true)}
               />
             </div>
           </SettingsSection>
