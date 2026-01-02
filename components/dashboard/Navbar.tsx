@@ -84,9 +84,11 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Action Icons - Hide some on mobile */}
-            <button className="hidden sm:block p-2 hover:bg-gray-50 rounded-lg transition-colors">
-              <MessageSquare className="w-5 h-5 text-textGray" />
-            </button>
+            <Link href="/dashboard/messages">
+              <button className="hidden sm:block p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                <MessageSquare className={`w-5 h-5 ${pathname === '/dashboard/messages' ? 'text-orange' : 'text-textGray'}`} />
+              </button>
+            </Link>
             
             <Link href="/dashboard/notifications">
               <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors relative">

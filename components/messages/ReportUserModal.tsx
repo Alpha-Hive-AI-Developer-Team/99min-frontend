@@ -3,26 +3,29 @@
 import React from 'react';
 import ReportModal from '@/components/shared/ReportModal';
 
-interface ReportAdModalProps {
+interface ReportUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit?: (reason: string, details: string) => void;
+  userName: string;
 }
 
-const ReportAdModal: React.FC<ReportAdModalProps> = ({
+const ReportUserModal: React.FC<ReportUserModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  userName,
 }) => {
   return (
     <ReportModal
       isOpen={isOpen}
       onClose={onClose}
       onSubmit={onSubmit}
-      type="ad"
+      type="user"
+      userName={userName}
     />
   );
 };
 
-export default ReportAdModal;
+export default ReportUserModal;
 
