@@ -55,7 +55,7 @@ const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
       {/* Language Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 bg-lightGrey border border-orange/30 rounded-lg px-3 py-2 hover:opacity-90 transition-opacity"
+        className="w-full flex items-center gap-2 bg-lightGrey border border-oran ge/30 rounded-lg px-3 py-2 hover:opacity-90 transition-opacity"
       >
         <Globe className="w-5 h-5 text-orange shrink-0" />
         <span className="text-textBlack font-bold text-sm flex-1 text-left">{selectedLang.name}</span>
