@@ -13,6 +13,8 @@ import NotificationsPage from '@/components/settings/NotificationsPage';
 import LocationPage from '@/components/settings/LocationPage';
 import PrivacyPage from '@/components/settings/PrivacyPage';
 import HelpCenterPage from '@/components/settings/HelpCenterPage';
+import PaymentMethodsPage from '@/components/settings/PaymentMethodsPage';
+import ConfirmationModal from '@/components/shared/ConfirmationModal';
 import { User, Bell, MapPin, CreditCard, Shield, HelpCircle, Lock } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
@@ -22,6 +24,8 @@ const SettingsPage: React.FC = () => {
   const [showLocation, setShowLocation] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showHelpCenter, setShowHelpCenter] = useState(false);
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleLogout = () => {
     // Handle logout logic here
@@ -82,6 +86,15 @@ const SettingsPage: React.FC = () => {
     );
   }
 
+  // Show Payment Methods page if showPaymentMethods is true
+  if (showPaymentMethods) {
+    return (
+      <DashboardLayout>
+        <PaymentMethodsPage onBack={() => setShowPaymentMethods(false)} />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="min-h-screen  bg-inputBg">
@@ -126,7 +139,7 @@ const SettingsPage: React.FC = () => {
               <SettingsItem
                 icon={<CreditCard className="w-5 h-5" />}
                 label="Payment Methods"
-                onClick={() => console.log('Payment Methods clicked')}
+                onClick={() => setShowPaymentMethods(true)}
               />
             </div>
             <div className="px-4">
@@ -158,7 +171,7 @@ const SettingsPage: React.FC = () => {
 
           {/* Log Out Button */}
           <div className="mb-8">
-            <LogOutButton onClick={handleLogout} />
+            <LogOutButton onClick={() => setIsLogoutModalOpen(true)} />
           </div>
 
           {/* Version Footer */}
@@ -167,6 +180,17 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Log Out"
+        description="Are you sure you want to log out?"
+        confirmText="Log Out"
+        cancelText="Cancel"
+      />
     </DashboardLayout>
   );
 };
