@@ -83,9 +83,9 @@ const Navbar: React.FC = () => {
               <LanguageDropdown />
             </div>
 
-            {/* Action Icons - Hide some on mobile */}
+            {/* Action Icons */}
             <Link href="/dashboard/messages">
-              <button className="hidden sm:block p-2 hover:bg-gray-50 rounded-lg transition-colors">
+              <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
                 <MessageSquare className={`w-5 h-5 ${pathname === '/dashboard/messages' ? 'text-orange' : 'text-textGray'}`} />
               </button>
             </Link>

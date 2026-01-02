@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { X, MessageCircle, Facebook, Twitter, Mail, Link2, Send, Linkedin } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface ShareAdModalProps {
   isOpen: boolean;
@@ -10,14 +10,14 @@ interface ShareAdModalProps {
 }
 
 const shareOptions = [
-  { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, color: 'text-green-500' },
-  { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-500' },
-  { id: 'twitter', label: 'Twitter', icon: Twitter, color: 'text-blue-400' },
-  { id: 'email', label: 'Email', icon: Mail, color: 'text-gray-500' },
-  { id: 'copylink', label: 'Copy Link', icon: Link2, color: 'text-orange' },
-  { id: 'messenger', label: 'Messenger', icon: MessageCircle, color: 'text-blue-500' },
-  { id: 'telegram', label: 'Telegram', icon: Send, color: 'text-blue-400' },
-  { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-600' },
+  { id: 'whatsapp', label: 'WhatsApp', icon:"📱" ,className: 'bg-[#25D36615]' },
+  { id: 'facebook', label: 'Facebook', icon: '👤', className: 'bg-[#1877F215]' },
+  { id: 'twitter', label: 'Twitter', icon: '🐦', className: 'bg-[#1877F215]' },
+  { id: 'email', label: 'Email', icon: '✉️', className: 'bg-[#1877F215]' },
+    { id: 'copylink', label: 'Copy Link', icon: '🔗', className: 'bg-[#FF7A0015]' },
+  { id: 'messenger', label: 'Messenger', icon: '💬', className: 'bg-[#1877F215]' },
+  { id: 'telegram', label: 'Telegram', icon: '✈️', className: 'bg-[#1877F215]' },
+  { id: 'linkedin', label: 'LinkedIn', icon: '💼', className: 'bg-[#1877F215]' },
 ];
 
 const ShareAdModal: React.FC<ShareAdModalProps> = ({
@@ -84,14 +84,13 @@ const ShareAdModal: React.FC<ShareAdModalProps> = ({
           {/* Sharing Options Grid */}
           <div className="grid grid-cols-4 gap-4">
             {shareOptions.map((option) => {
-              const IconComponent = option.icon;
               return (
                 <button
                   key={option.id}
                   onClick={() => handleShare(option.id)}
-                  className="flex flex-col items-center gap-2 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+                  className={`flex flex-col  ${option.className} items-center gap-2 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors`}
                 >
-                  <IconComponent className={`w-8 h-8 ${option.color}`} />
+                  <div className={`text-2xl font-bold`}>{option.icon}</div>
                   <span className="text-xs font-medium text-textBlack text-center">
                     {option.label}
                   </span>

@@ -51,20 +51,20 @@ const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
   const selectedLang = languages.find(lang => lang.code === selectedLanguage) || languages[0];
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative w-full" ref={dropdownRef}>
       {/* Language Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 bg-lightGrey border border-orange/30 rounded-lg px-3 py-2 hover:opacity-90 transition-opacity"
+        className="w-full flex items-center gap-2 bg-lightGrey border border-orange/30 rounded-lg px-3 py-2 hover:opacity-90 transition-opacity"
       >
-        <Globe className="w-5 h-5 text-orange" />
-        <span className="text-textBlack font-bold">{selectedLang.name}</span>
-        <ChevronUp className={`w-4 h-4 text-textGray transition-transform ${isOpen ? '' : 'rotate-180'}`} />
+        <Globe className="w-5 h-5 text-orange shrink-0" />
+        <span className="text-textBlack font-bold text-sm flex-1 text-left">{selectedLang.name}</span>
+        <ChevronUp className={`w-4 h-4 text-textGray transition-transform shrink-0 ${isOpen ? '' : 'rotate-180'}`} />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl p-4 min-w-[220px] z-50">
+        <div className="absolute -bottom-20 md:top-full left-0 w-full md:right-0 md:left-auto md:w-auto md:min-w-[220px] mt-2 bg-white rounded-xl shadow-2xl p-4 z-50 border border-gray-100">
           {/* Header */}
           <div className="text-textGray text-xs font-medium uppercase tracking-wide mb-3">
             SELECT LANGUAGE
@@ -84,9 +84,9 @@ const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
                       : 'text-textBlack hover:bg-gray-50'
                     }`}
                 >
-                  <span className="font-medium">{language.name}</span>
+                  <span className="font-medium text-sm">{language.name}</span>
                   {isSelected && (
-                    <div className="w-2 h-2 bg-orange rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange rounded-full shrink-0"></div>
                   )}
                 </button>
               );

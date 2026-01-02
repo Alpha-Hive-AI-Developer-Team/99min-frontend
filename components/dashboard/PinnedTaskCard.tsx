@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, Clock, Share2, Tag } from 'lucide-react';
-
+import Image from 'next/image';
+import watermark from '@/public/assets/images/watermark.svg';
 interface PinnedTaskCardProps {
   title?: string;
   description?: string;
@@ -23,15 +24,20 @@ const PinnedTaskCard: React.FC<PinnedTaskCardProps> = ({
   return (
     <div 
       onClick={onClick}
-      className="bg-white rounded-2xl p-6 border-2 border-orange relative overflow-hidden cursor-pointer"
+      className="bg-iconBg rounded-2xl p-6 border-2 border-orange relative overflow-hidden cursor-pointer"
     >
-      {/* Watermark effect */}
-      <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
-        <svg width="200" height="200" viewBox="0 0 140 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M10 0C4.47715 0 0 4.47715 0 10V24C2.76142 24 5 26.2386 5 29C5 31.7614 2.76142 34 0 34V46C2.76142 46 5 48.2386 5 51C5 53.7614 2.76142 56 0 56V70C0 75.5228 4.47715 80 10 80H130C135.523 80 140 75.5228 140 70V56C137.239 56 135 53.7614 135 51C135 48.2386 137.239 46 140 46V34C137.239 34 135 31.7614 135 29C135 26.2386 137.239 24 140 24V10C140 4.47715 135.523 0 130 0H10Z" fill="#F59E0B" />
-        </svg>
+      {/* Watermark background */}
+      <div className="absolute inset-0  top-10 left-0 pointer-events-none">
+        <Image
+          src={watermark.src}
+          alt=""
+          fill
+          className="object-cover"
+          style={{ objectPosition: 'center' }}
+        />
       </div>
 
+      <div className="relative z-10">
       <div className="inline-block bg-orange text-white text-xs font-bold px-3 py-2 rounded-full mb-4">
       ✨  PINNED EXAMPLE
       </div>
@@ -75,6 +81,7 @@ const PinnedTaskCard: React.FC<PinnedTaskCardProps> = ({
         <Share2 className="w-5 h-5" />
         Share
       </button>
+      </div>
     </div>
   );
 };
