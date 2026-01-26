@@ -1,11 +1,20 @@
 "use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Search, MessageCircle, Bell, User, Menu, X, MessageSquare } from 'lucide-react';
-import TicketBadge from './TicketBadge';
-import LanguageDropdown from './LanguageDropdown';
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Search,
+  MessageCircle,
+  Bell,
+  User,
+  Menu,
+  X,
+  MessageSquare,
+  Globe2,
+} from "lucide-react";
+import TicketBadge from "./TicketBadge";
+import LanguageDropdown from "./LanguageDropdown";
 
 interface NavLink {
   href: string;
@@ -13,9 +22,9 @@ interface NavLink {
 }
 
 const navLinks: NavLink[] = [
-  { href: '/dashboard/explore', label: 'Explore' },
-  { href: '/dashboard/create', label: 'Create' },
-  { href: '/dashboard/subscriptions', label: 'Subscriptions' },
+  { href: "/dashboard/explore", label: "Explore" },
+  { href: "/dashboard/create", label: "Create" },
+  { href: "/dashboard/subscriptions", label: "Subscriptions" },
 ];
 
 const Navbar: React.FC = () => {
@@ -28,35 +37,36 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-3">
         {/* Main Navbar Row */}
         <div className="flex items-center justify-between">
-          
           {/* Left Section: Ticket Icon + Search (hidden on mobile, shown on md+) */}
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <TicketBadge />
-            
+
             {/* Search Bar - Hidden on mobile, shown on md+ */}
-            <div className="relative flex-1 max-w-md hidden md:block">
+            {/* <div className="relative flex-1 max-w-md hidden md:block">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-textGray" />
               <input
                 type="text"
                 placeholder="Search tasks..."
                 className="w-full pl-10 pr-4 py-2.5 bg-inputBg rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-orange focus:bg-white transition-all text-textBlack placeholder:text-textGray"
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Middle Section: Navigation Links - Hidden on mobile, shown on lg+ */}
-          <div className="hidden lg:flex items-center gap-8 mx-4">
+          <div className="hidden lg:flex items-center gap-6 mx-4">
             {navLinks.map((link) => {
-              const isActive = pathname === link.href || pathname?.startsWith(link.href);
+              const isActive =
+                pathname === link.href || pathname?.startsWith(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={`text-sm transition-colors relative pb-1
-                    ${isActive 
-                      ? 'text-textBlack font-bold' 
-                      : 'text-textGray hover:text-textBlack font-medium'
-                    }`}
+          ${
+            isActive
+              ? "text-textBlack font-bold"
+              : "text-textGray hover:text-textBlack font-medium"
+          }`}
                 >
                   {link.label}
                   {isActive && (
@@ -65,20 +75,39 @@ const Navbar: React.FC = () => {
                 </Link>
               );
             })}
+
+            {/* Translation Button - Desktop */}
+            <button
+              onClick={() => console.log("Open translation modal")}
+              className="flex items-center gap-2 bg-lightGrey border border-orange/30 rounded-lg px-3 py-2 hover:opacity-90 transition-opacity"
+            >
+              <Globe2 className="w-5 h-5 text-orange shrink-0" />
+              <span className="text-textBlack font-bold text-sm">
+                Translate
+              </span>
+            </button>
           </div>
 
           {/* Right Section: Icons + Menu */}
           <div className="flex items-center gap-2 md:gap-4">
             {/* Search Icon Button - Only on mobile */}
-            <button 
+            {/* <button 
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="md:hidden p-2 hover:bg-gray-50 rounded-lg transition-colors"
               aria-label="Search"
             >
               <Search className="w-5 h-5 text-textGray" />
-            </button>
+            </button> */}
 
             {/* Language Dropdown - Hidden on mobile */}
+            {/* Translation Button - Mobile */}
+            <button
+              onClick={() => console.log("Open translation modal")}
+              className="flex items-center gap-1 bg-lightGrey border border-orange/30 rounded-lg px-2 py-2 hover:opacity-90 transition-opacity lg:hidden"
+            >
+              <Globe2 className="w-5 h-5 text-orange shrink-0" />
+            </button>
+
             <div className="hidden md:block">
               <LanguageDropdown />
             </div>
@@ -86,20 +115,26 @@ const Navbar: React.FC = () => {
             {/* Action Icons */}
             <Link href="/dashboard/messages">
               <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                <MessageSquare className={`w-5 h-5 ${pathname === '/dashboard/messages' ? 'text-orange' : 'text-textGray'}`} />
+                <MessageSquare
+                  className={`w-5 h-5 ${pathname === "/dashboard/messages" ? "text-orange" : "text-textGray"}`}
+                />
               </button>
             </Link>
-            
+
             <Link href="/dashboard/notifications">
               <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors relative">
-                <Bell className={`w-5 h-5 ${pathname === '/dashboard/notifications' ? 'text-orange' : 'text-textGray'}`} />
+                <Bell
+                  className={`w-5 h-5 ${pathname === "/dashboard/notifications" ? "text-orange" : "text-textGray"}`}
+                />
                 {/* Notification badge can be added here */}
               </button>
             </Link>
-            
+
             <Link href="/dashboard/settings">
               <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                <User className={`w-5 ${pathname === '/dashboard/settings' ? 'text-orange' : 'text-textGray'} h-5 `} />
+                <User
+                  className={`w-5 ${pathname === "/dashboard/settings" ? "text-orange" : "text-textGray"} h-5 `}
+                />
               </button>
             </Link>
 
@@ -119,7 +154,7 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile Search Bar - Shown when search icon is clicked */}
-        {isSearchOpen && (
+        {/* {isSearchOpen && (
           <div className="mt-3 md:hidden">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-textGray" />
@@ -131,30 +166,32 @@ const Navbar: React.FC = () => {
               />
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Mobile Menu - Navigation Links */}
         {isMobileMenuOpen && (
           <div className="lg:hidden mt-4 pt-4 border-t border-gray-200 pb-2">
             <div className="flex flex-col gap-4">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href || pathname?.startsWith(link.href);
+                const isActive =
+                  pathname === link.href || pathname?.startsWith(link.href);
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`font-bold text-base transition-colors py-2 px-2 rounded-lg
-                      ${isActive 
-                        ? 'text-orange bg-iconBg' 
-                        : 'text-textGray hover:text-textBlack hover:bg-gray-50'
+                      ${
+                        isActive
+                          ? "text-orange bg-iconBg"
+                          : "text-textGray hover:text-textBlack hover:bg-gray-50"
                       }`}
                   >
                     {link.label}
                   </Link>
                 );
               })}
-              
+
               {/* Language Dropdown in Mobile Menu */}
               <div className="md:hidden pt-2 border-t border-gray-200">
                 <LanguageDropdown />
@@ -168,4 +205,3 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
-

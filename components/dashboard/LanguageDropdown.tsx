@@ -9,12 +9,49 @@ interface Language {
 }
 
 const languages: Language[] = [
+  { code: 'sq', name: 'Albanian' },
+  { code: 'ast', name: 'Asturian' },
+  { code: 'be', name: 'Belarusian' },
+  { code: 'bs', name: 'Bosnian' },
+  { code: 'bg', name: 'Bulgarian' },
+  { code: 'ca', name: 'Catalan' },
+  { code: 'hr', name: 'Croatian' },
+  { code: 'cs', name: 'Czech' },
+  { code: 'da', name: 'Danish' },
+  { code: 'nl', name: 'Dutch' },
   { code: 'en', name: 'English' },
-  { code: 'de', name: 'German' },
-  { code: 'es', name: 'Spanish' },
+  { code: 'et', name: 'Estonian' },
+  { code: 'fo', name: 'Faroese' },
+  { code: 'fi', name: 'Finnish' },
   { code: 'fr', name: 'French' },
+  { code: 'gl', name: 'Galician' },
+  { code: 'de', name: 'German' },
+  { code: 'el', name: 'Greek' },
+  { code: 'hu', name: 'Hungarian' },
+  { code: 'is', name: 'Icelandic' },
+  { code: 'ga', name: 'Irish' },
   { code: 'it', name: 'Italian' },
+  { code: 'la', name: 'Latin' },
+  { code: 'lv', name: 'Latvian' },
+  { code: 'lt', name: 'Lithuanian' },
+  { code: 'lb', name: 'Luxembourgish' },
+  { code: 'mk', name: 'Macedonian' },
+  { code: 'mt', name: 'Maltese' },
+  { code: 'no', name: 'Norwegian' },
+  { code: 'pl', name: 'Polish' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'ro', name: 'Romanian' },
+  { code: 'rm', name: 'Romansh' },
+  { code: 'ru', name: 'Russian' },
+  { code: 'sr', name: 'Serbian' },
+  { code: 'sk', name: 'Slovak' },
+  { code: 'sl', name: 'Slovenian' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'sv', name: 'Swedish' },
+  { code: 'uk', name: 'Ukrainian' },
+  { code: 'cy', name: 'Welsh' },
 ];
+
 
 interface LanguageDropdownProps {
   currentLanguage?: string;
@@ -71,7 +108,8 @@ const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
           </div>
 
           {/* Language Options */}
-          <div className="space-y-1">
+          <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+
             {languages.map((language) => {
               const isSelected = language.code === selectedLanguage;
               return (

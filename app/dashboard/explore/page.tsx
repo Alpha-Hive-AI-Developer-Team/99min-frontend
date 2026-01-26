@@ -116,7 +116,7 @@ const ExplorePage: React.FC = () => {
           <ExploreHeader activeTasksCount={6} />
 
           {/* Category Chips */}
-          <div className="flex gap-3 overflow-x-auto pb-4 mb-2 scrollbar-hide">
+          {/* <div className="flex gap-3 overflow-x-auto pb-4 mb-2 scrollbar-hide">
             {categories.map((category, index) => (
               <CategoryChip
                 key={index}
@@ -126,7 +126,7 @@ const ExplorePage: React.FC = () => {
                 onClick={() => setActiveCategory(index)}
               />
             ))}
-          </div>
+          </div> */}
 
           {/* Task Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">

@@ -41,20 +41,20 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({ onBack, onReport,
       title="Task Details"
       onBack={onBack}
       maxWidth="7xl"
-      rightContent={
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <MoreVertical className="w-6 h-6 text-textBlack" />
-          </button>
+      // rightContent={
+      //   <div className="relative" ref={menuRef}>
+      //     <button
+      //       onClick={() => setIsMenuOpen(!isMenuOpen)}
+      //       className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
+      //     >
+      //       <MoreVertical className="w-6 h-6 text-textBlack" />
+      //     </button>
 
-          {isMenuOpen && (
-            <TaskDetailsMenu onReport={handleReport} onShare={handleShare} />
-          )}
-        </div>
-      }
+      //     {isMenuOpen && (
+      //       <TaskDetailsMenu onReport={handleReport} onShare={handleShare} />
+      //     )}
+      //   </div>
+      // }
     />
   );
 };
