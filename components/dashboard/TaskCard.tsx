@@ -69,8 +69,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
       
       <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
         <button className="flex items-center gap-2 text-textBlack font-bold hover:text-textBlack transition-colors">
-          <Share2 className="w-5 h-5" />
-          Share
+          {/* <Share2 className="w-5 h-5" /> */}
+        Contact us
         </button>
       </div>
     </div>

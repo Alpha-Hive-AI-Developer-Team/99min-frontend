@@ -78,8 +78,8 @@ const PinnedTaskCard: React.FC<PinnedTaskCardProps> = ({
       </div>
 
       <button className="w-full bg-orange hover:bg-orangeHover text-white text-lg font-bold py-3.5 rounded-xl shadow-sm transition-colors duration-200 flex items-center justify-center gap-2">
-        <Share2 className="w-5 h-5" />
-        Share
+        {/* <Share2 className="w-5 h-5" /> */}
+       Contact us
       </button>
       </div>
     </div>
