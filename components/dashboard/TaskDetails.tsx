@@ -73,7 +73,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
       className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow hover:bg-white transition"
       aria-label="Share"
     >
-      <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+      <svg width="18" height="18" color='orange'  fill="currentColor" viewBox="0 0 24 24">
         <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7a3.27 3.27 0 0 0 0-1.39l7.02-4.11A2.99 2.99 0 1 0 14 5a2.9 2.9 0 0 0 .04.49L7.02 9.6a3 3 0 1 0 0 4.8l7.02 4.11c-.03.16-.04.33-.04.49a3 3 0 1 0 3-3z"/>
       </svg>
     </button>
@@ -83,7 +83,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
       className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow hover:bg-white transition"
       aria-label="Report"
     >
-      <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+      <svg width="18" height="18" color='orange' fill="currentColor" viewBox="0 0 24 24">
         <path d="M6 2h9l1 2h4v13h-2v-2H6v7H4V2h2zm0 11h12V6H6v7z"/>
       </svg>
     </button>
