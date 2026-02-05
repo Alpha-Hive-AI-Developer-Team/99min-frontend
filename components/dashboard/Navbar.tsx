@@ -22,7 +22,7 @@ interface NavLink {
 }
 
 const navLinks: NavLink[] = [
-  { href: "/dashboard/explore", label: "Explore" },
+  { href: "/dashboard/explore", label: "Explore/Home" },
   { href: "/dashboard/create", label: "Create" },
   { href: "/dashboard/subscriptions", label: "Subscriptions" },
 ];
