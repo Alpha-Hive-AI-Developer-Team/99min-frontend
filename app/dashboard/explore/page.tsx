@@ -9,6 +9,7 @@ import ExploreHeader from '@/components/dashboard/ExploreHeader';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import TaskDetails, { TaskDetailsData } from '@/components/dashboard/TaskDetails';
 import dog from '@/public/assets/images/dog.jpg';
+
 interface TaskCardData {
   image: string;
   title: string;
@@ -109,6 +110,7 @@ const ExplorePage: React.FC = () => {
 
   // Show Explore Page
   return (
+
     <DashboardLayout>
       <div className="bg-inputBg p-6">
         <div className="max-w-6xl mx-auto">
@@ -145,6 +147,7 @@ const ExplorePage: React.FC = () => {
         </div>
       </div>
     </DashboardLayout>
+   
   );
 };
 

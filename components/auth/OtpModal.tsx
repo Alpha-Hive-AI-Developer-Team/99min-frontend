@@ -1,37 +1,89 @@
+// src/components/auth/OtpModal.tsx
 "use client";
 
-import React, { useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, OTPInput, IconContainer } from "@/components/ui";
 import { AuthPageLayout } from "./shared";
+import { authApi } from "@/utils/api";
+import { otpSchema, OtpFormData } from "@/validators/auth-schema";
 
 interface OtpModalProps {
   email?: string;
   onBack?: () => void;
   onVerify?: () => void;
+  purpose?: "signup" | "password_reset";
 }
 
-const OtpModal: React.FC<OtpModalProps> = ({ 
-  email = "12345@gmail.com", 
-  onBack, 
-  onVerify 
+const OtpModal: React.FC<OtpModalProps> = ({
+  email = "",
+  onBack,
+  onVerify,
+  purpose = "signup",
 }) => {
-  const [code, setCode] = useState('');
-  const [isComplete, setIsComplete] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [resendSeconds, setResendSeconds] = useState(55);
+  const [canResend, setCanResend] = useState(false);
 
-  const handleCodeChange = (newCode: string) => {
-    setCode(newCode);
-    setIsComplete(newCode.length === 6);
+  const {
+    setValue,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<OtpFormData>({
+    resolver: zodResolver(otpSchema),
+    mode: "onChange",
+    defaultValues: { otp: "" },
+  });
+
+  const otpValue = watch("otp");
+
+  // Resend countdown
+  useEffect(() => {
+    if (resendSeconds <= 0) {
+      setCanResend(true);
+      return;
+    }
+    const timer = setTimeout(() => setResendSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendSeconds]);
+
+  // Wire OTPInput component into react-hook-form
+  const handleOtpChange = (code: string) => {
+    setValue("otp", code, { shouldValidate: true });
+    setApiError("");
   };
 
-  const handleComplete = (completeCode: string) => {
-    setIsComplete(true);
-    setCode(completeCode);
+  const onSubmit = async (data: OtpFormData) => {
+    setApiError("");
+    try {
+      if (purpose === "signup") {
+        await authApi.verifySignupOtp({ email, otp: data.otp });
+      } else {
+        await authApi.verifyResetOtp({ email, otp: data.otp });
+      }
+      onVerify?.();
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Invalid OTP");
+      setValue("otp", "", { shouldValidate: false });
+    }
   };
 
-  const handleVerify = () => {
-    if (isComplete && onVerify) {
-      onVerify();
+  const handleResend = async () => {
+    if (!canResend || !email) return;
+    setApiError("");
+    setCanResend(false);
+    setResendSeconds(55);
+    try {
+      if (purpose === "signup") {
+        await authApi.resendSignupOtp({ email });
+      } else {
+        await authApi.forgotPassword({ email });
+      }
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Failed to resend OTP");
     }
   };
 
@@ -42,50 +94,66 @@ const OtpModal: React.FC<OtpModalProps> = ({
       contentMaxWidth="md"
       contentClassName="pt-4"
     >
-      {/* Icon Container */}
       <IconContainer className="mb-6">
         <CheckCircle2 className="w-10 h-10 text-orange" strokeWidth={3} />
       </IconContainer>
 
-      {/* Title */}
       <h1 className="text-3xl font-black text-textBlack mb-4 tracking-tight text-center">
         Check your email
       </h1>
 
-      {/* Subtitle */}
       <p className="text-center text-textGray text-sm font-medium mb-10">
-        We sent a verification code to <b className="text-textBlack">{email}</b>
+        We sent a verification code to{" "}
+        <b className="text-textBlack">{email}</b>
       </p>
 
-      {/* Label */}
       <label className="block text-textBlack text-xs font-bold mb-4 text-center w-full">
         Enter verification code
       </label>
 
-      {/* Verification Code Inputs */}
-      <OTPInput
-        length={6}
-        onChange={handleCodeChange}
-        onComplete={handleComplete}
-        className="mb-8"
-      />
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <OTPInput
+          length={6}
+          onChange={handleOtpChange}
+          onComplete={handleOtpChange}
+          className="mb-2"
+        />
 
-      {/* Resend Timer */}
-      <div className="text-center text-textGray text-sm font-medium mb-10">
-        <p className="mb-1">Didn't receive the code?</p>
-        <p className="text-textGray opacity-70">Resend in 55s</p>
-      </div>
+        {/* Zod error for OTP format */}
+        {errors.otp && (
+          <p className="text-red-500 text-xs text-center mb-2">{errors.otp.message}</p>
+        )}
 
-      {/* Verify Button */}
-      <Button
-        variant={isComplete ? "primary" : "disabled"}
-        size="md"
-        fullWidth
-        onClick={handleVerify}
-        disabled={!isComplete}
-      >
-        Verify Code
-      </Button>
+        {/* API error */}
+        {apiError && (
+          <p className="text-red-500 text-sm text-center mb-4">{apiError}</p>
+        )}
+
+        <div className="text-center text-textGray text-sm font-medium mb-8">
+          <p className="mb-1">Didn&apos;t receive the code?</p>
+          {canResend ? (
+            <button
+              type="button"
+              onClick={handleResend}
+              className="text-orange font-semibold underline"
+            >
+              Resend code
+            </button>
+          ) : (
+            <p className="text-textGray opacity-70">Resend in {resendSeconds}s</p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          fullWidth
+          disabled={!isValid || isSubmitting}
+        >
+          {isSubmitting ? "Verifying..." : "Verify Code"}
+        </Button>
+      </form>
     </AuthPageLayout>
   );
 };

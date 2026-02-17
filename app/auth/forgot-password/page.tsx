@@ -1,71 +1,82 @@
+// src/components/auth/ForgotPasswordScreen.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import Link from "next/link";
-import { Mail } from 'lucide-react';
+import { Mail } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, IconContainer } from "@/components/ui";
 import { AuthPageLayout } from "@/components/auth/shared";
 import OtpModal from "@/components/auth/OtpModal";
 import NewPasswordModal from "@/components/auth/NewPasswordModal";
 import PasswordSuccessModal from "@/components/auth/PasswordSuccessModal";
+import { authApi } from "@/utils/api";
+import { forgotPasswordSchema, ForgotPasswordFormData } from "@/validators/auth-schema";
 
-type ForgotPasswordStep = 'email' | 'otp' | 'newPassword' | 'success';
+type ForgotPasswordStep = "email" | "otp" | "newPassword" | "success";
 
 const ForgotPasswordScreen: React.FC = () => {
-  const [step, setStep] = useState<ForgotPasswordStep>('email');
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<ForgotPasswordStep>("email");
+  const [email, setEmailState] = useState("");
+  const [apiError, setApiError] = useState("");
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep('otp');
-  };
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    mode: "onChange",
+  });
 
-  const handleBack = () => {
-    if (step === 'otp') {
-      setStep('email');
-    } else if (step === 'newPassword') {
-      setStep('otp');
+  const onSubmit = async (data: ForgotPasswordFormData) => {
+    setApiError("");
+    try {
+      await authApi.forgotPassword({ email: data.email });
+      setEmailState(data.email); // pass to OTP modal
+      setStep("otp");
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Failed to send code");
     }
   };
 
-  const handleOtpVerify = () => {
-    setStep('newPassword');
+  const handleBack = () => {
+    if (step === "otp") setStep("email");
+    else if (step === "newPassword") setStep("otp");
   };
 
-  const handlePasswordReset = () => {
-    setStep('success');
-  };
-
-  // Render different steps
-  if (step === 'otp') {
+  if (step === "otp") {
     return (
-      <OtpModal 
-        email={email} 
+      <OtpModal
+        email={email}
         onBack={handleBack}
-        onVerify={handleOtpVerify}
+        onVerify={() => setStep("newPassword")}
+        purpose="password_reset"
       />
     );
   }
 
-  if (step === 'newPassword') {
+  if (step === "newPassword") {
     return (
-      <NewPasswordModal 
+      <NewPasswordModal
+        email={email}
         onBack={handleBack}
-        onSubmit={handlePasswordReset}
+        onSubmit={() => setStep("success")}
       />
     );
   }
 
-  if (step === 'success') {
+  if (step === "success") {
     return (
       <>
-        <div className="min-h-screen bg-white"></div>
+        <div className="min-h-screen bg-white" />
         <PasswordSuccessModal isOpen={true} />
       </>
     );
   }
 
-  // Default: Email step
   return (
     <AuthPageLayout
       backButtonHref="/auth/login"
@@ -73,34 +84,37 @@ const ForgotPasswordScreen: React.FC = () => {
       contentMaxWidth="md"
       contentClassName="pt-4"
     >
-      {/* Icon Container */}
       <IconContainer className="mb-6">
         <Mail className="w-8 h-8 text-orange" />
       </IconContainer>
 
-      {/* Title */}
       <h1 className="text-3xl font-black text-textBlack mb-4 tracking-tight">
         Reset Password
       </h1>
 
-      {/* Subtitle */}
       <p className="text-center text-textGray text-sm leading-relaxed mb-10 max-w-xs font-medium opacity-80">
-        Enter your email and we'll send you a verification code to reset your password
+        Enter your email and we&apos;ll send you a verification code to reset
+        your password
       </p>
 
-      {/* Form */}
-      <form className="w-full" onSubmit={handleEmailSubmit}>
-        <Input
-          type="email"
-          id="email"
-          label="Email Address"
-          placeholder="12345@gmail.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          variant="alt"
-          className="mb-8"
-          required
-        />
+      <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
+        <div className="mb-8">
+          <Input
+            type="email"
+            id="email"
+            label="Email Address"
+            placeholder="your@email.com"
+            variant="alt"
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+          )}
+        </div>
+
+        {apiError && (
+          <p className="text-red-500 text-sm text-center mb-4">{apiError}</p>
+        )}
 
         <Button
           type="submit"
@@ -108,19 +122,15 @@ const ForgotPasswordScreen: React.FC = () => {
           size="md"
           fullWidth
           className="mb-10"
+          disabled={!isValid || isSubmitting}
         >
-          Send Reset Link
+          {isSubmitting ? "Sending..." : "Send Reset Code"}
         </Button>
 
-        {/* Footer Link */}
         <div className="text-center text-textGray text-sm font-medium opacity-80">
-          Back to{' '}
+          Back to{" "}
           <Link href="/auth/login">
-            <Button 
-              type="button" 
-              variant="link"
-              size="sm"
-            >
+            <Button type="button" variant="link" size="sm">
               Login
             </Button>
           </Link>
