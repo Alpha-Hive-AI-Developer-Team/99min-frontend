@@ -1,58 +1,104 @@
+// src/components/auth/LoginScreen.tsx
 "use client";
 
-import React from 'react';
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@/components/ui";
 import { AuthPageLayout, AuthHeader, AuthFormFooter } from "./shared";
+import { authApi } from "@/utils/api";
+import { useAuth } from "@/store/auth-context";
+import { loginSchema, LoginFormData } from "@/validators/auth-schema";
 
 const LoginScreen: React.FC = () => {
+  const router = useRouter();
+  const { setAuth } = useAuth();
+  const [apiError, setApiError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    setApiError("");
+    try {
+      const res = await authApi.login({ email: data.email, password: data.password });
+      setAuth(res.data.user, res.data.accessToken);
+      router.push("/dashboard/explore");
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Login failed");
+    }
+  };
+
   return (
-    <AuthPageLayout 
+    <AuthPageLayout
       backButtonHref="/"
       contentMaxWidth="sm"
       contentClassName="justify-center"
     >
-      <AuthHeader 
-        title="Welcome Back"
-        subtitle="Login to continue"
-      />
+      <AuthHeader title="Welcome Back" subtitle="Login to continue" />
 
-      <form className="w-full">
-        <Input
-          type="email"
-          id="email"
-          label="Email"
-          placeholder="your@email.com"
-        />
+      <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
 
-        <Input
-          type="password"
-          id="password"
-          label="Password"
-          placeholder="Enter your password"
-          showPasswordToggle
-          className="mb-2"
-        />
+        {/* Email */}
+        <div className="mb-4">
+          <Input
+            type="email"
+            id="email"
+            label="Email"
+            placeholder="your@email.com"
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+          )}
+        </div>
 
-        {/* Forgot Password Link */}
+        {/* Password */}
+        <div className="mb-2">
+          <Input
+            type="password"
+            id="password"
+            label="Password"
+            placeholder="Enter your password"
+            showPasswordToggle
+            {...register("password")}
+          />
+          {errors.password && (
+            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+          )}
+        </div>
+
         <div className="flex justify-end mb-6">
           <Link href="/auth/forgot-password">
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-            >
+            <Button type="button" variant="link" size="sm">
               Forgot Password?
             </Button>
           </Link>
         </div>
 
-        {/* Login Button */}
-       <Link href="/dashboard/explore"> <Button type="submit" variant="primary" size="lg" fullWidth>
-          Login
-        </Button> </Link>
+        {/* API error */}
+        {apiError && (
+          <p className="text-red-500 text-sm text-center mb-4">{apiError}</p>
+        )}
 
-        {/* Sign Up Footer */}
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          fullWidth
+          disabled={!isValid || isSubmitting}
+        >
+          {isSubmitting ? "Logging in..." : "Login"}
+        </Button>
+
         <AuthFormFooter
           question="No account?"
           linkText="Sign Up"

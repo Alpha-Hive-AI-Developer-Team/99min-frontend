@@ -1,27 +1,54 @@
+// src/components/auth/NewPasswordModal.tsx
 "use client";
 
-import React, { useState } from 'react';
-import { Lock } from 'lucide-react';
+import React, { useState } from "react";
+import { Lock } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, IconContainer } from "@/components/ui";
 import { AuthPageLayout, PasswordStrengthMeter, PasswordRequirements } from "./shared";
+import { authApi } from "@/utils/api";
+import { resetPasswordSchema, ResetPasswordFormData } from "@/validators/auth-schema";
 
 interface NewPasswordModalProps {
+  email: string;
   onBack?: () => void;
   onSubmit?: () => void;
 }
 
-const NewPasswordModal: React.FC<NewPasswordModalProps> = ({ onBack, onSubmit }) => {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+const NewPasswordModal: React.FC<NewPasswordModalProps> = ({
+  email,
+  onBack,
+  onSubmit,
+}) => {
+  const [apiError, setApiError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword && confirmPassword && newPassword === confirmPassword && onSubmit) {
-      onSubmit();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    mode: "onChange",
+  });
+
+  // Watch newPassword to pass to strength meter
+  const newPasswordValue = watch("newPassword", "");
+
+  const onFormSubmit = async (data: ResetPasswordFormData) => {
+    setApiError("");
+    try {
+      await authApi.resetPassword({
+        email,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword,
+      });
+      onSubmit?.();
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Failed to reset password");
     }
   };
-
-  const isFormValid = newPassword && confirmPassword && newPassword === confirmPassword;
 
   return (
     <AuthPageLayout
@@ -29,64 +56,67 @@ const NewPasswordModal: React.FC<NewPasswordModalProps> = ({ onBack, onSubmit })
       backButtonVariant="circular"
       contentMaxWidth="md"
     >
-      {/* Icon Container */}
       <IconContainer className="mb-6">
         <Lock className="w-8 h-8 text-orange" />
       </IconContainer>
 
-      {/* Title */}
       <h1 className="text-3xl font-black text-textBlack mb-3 tracking-tight text-center">
         Create new password
       </h1>
 
-      {/* Subtitle */}
       <p className="text-center text-textGray text-sm mb-8 leading-relaxed max-w-xs mx-auto opacity-80">
         Your new password must be different from previously used passwords
       </p>
 
-      {/* Form */}
-      <form className="w-full" onSubmit={handleSubmit}>
-        {/* New Password Input */}
+      <form className="w-full" onSubmit={handleSubmit(onFormSubmit)}>
+
+        {/* New Password */}
         <div className="mb-1">
           <Input
             type="password"
             id="new-password"
             label="New Password"
-            placeholder="Enter new password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Min 6 characters"
             showPasswordToggle
+            {...register("newPassword")}
           />
+          {errors.newPassword && (
+            <p className="text-red-500 text-xs mt-1">{errors.newPassword.message}</p>
+          )}
         </div>
 
-        {/* Password Strength Meter */}
-        <PasswordStrengthMeter password={newPassword} />
+        {/* Strength meter reads live value */}
+        <PasswordStrengthMeter password={newPasswordValue} />
 
-        {/* Confirm Password Input */}
-        <div className="mb-8">
+        {/* Confirm Password */}
+        <div className="mb-4">
           <Input
             type="password"
             id="confirm-password"
             label="Confirm Password"
             placeholder="Confirm new password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
             showPasswordToggle
+            {...register("confirmPassword")}
           />
+          {errors.confirmPassword && (
+            <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
+          )}
         </div>
 
-        {/* Password Requirements */}
-        <PasswordRequirements password={newPassword} />
+        <PasswordRequirements password={newPasswordValue} />
 
-        {/* Submit Button */}
+        {apiError && (
+          <p className="text-red-500 text-sm text-center mb-4">{apiError}</p>
+        )}
+
         <Button
           type="submit"
-          variant={isFormValid ? "primary" : "disabled"}
+          variant="primary"
           size="md"
           fullWidth
-          disabled={!isFormValid}
+          disabled={!isValid || isSubmitting}
         >
-          Reset Password
+          {isSubmitting ? "Resetting..." : "Reset Password"}
         </Button>
       </form>
     </AuthPageLayout>

@@ -10,6 +10,20 @@ import ShareAdModal from '@/components/dashboard/ShareAdModal';
 import ReportAdModal from '@/components/dashboard/ReportAdModal';
 import dog from '@/public/assets/images/dog.jpg';
 
+interface TaskCardData {
+  image: string;
+  title: string;
+  description: string;
+  price: string;
+  location: string;
+  timeLeft: string;
+  interest: number;
+  urgent?: boolean;
+  category?: string;
+  postedTime?: string;
+  tags?: string[];
+}
+
 const ExplorePage: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<TaskDetailsData | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -85,6 +99,7 @@ const ExplorePage: React.FC = () => {
   }
 
   return (
+
     <DashboardLayout>
       <div className="bg-inputBg p-6">
         <div className="max-w-6xl mx-auto">
@@ -120,6 +135,7 @@ const ExplorePage: React.FC = () => {
         />
       </div>
     </DashboardLayout>
+   
   );
 };
 

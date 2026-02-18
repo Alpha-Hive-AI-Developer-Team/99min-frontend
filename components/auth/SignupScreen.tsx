@@ -1,62 +1,64 @@
+// src/components/auth/SignupScreen.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@/components/ui";
 import { AuthPageLayout, AuthHeader, AuthFormFooter } from "./shared";
 import OtpModal from "@/components/auth/OtpModal";
+import { authApi } from "@/utils/api";
+import { signupSchema, SignupFormData } from "@/validators/auth-schema";
 
-type SignupStep = 'form' | 'otp';
+type SignupStep = "form" | "otp";
 
 const SignupScreen: React.FC = () => {
   const router = useRouter();
-  const [step, setStep] = useState<SignupStep>('form');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [step, setStep] = useState<SignupStep>("form");
+  const [email, setEmailState] = useState(""); // keep email for OTP step
+  const [apiError, setApiError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isFormValid) {
-      // In a real app, you would send the signup data to the backend here
-      console.log('Signup:', { name, email, password, confirmPassword });
-      setStep('otp');
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    mode: "onChange", // validate as user types
+  });
+
+  const onSubmit = async (data: SignupFormData) => {
+    setApiError("");
+    try {
+      await authApi.signup({ name: data.name.trim(), email: data.email, password: data.password });
+      setEmailState(data.email); // save for OTP modal
+      setStep("otp");
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Signup failed");
     }
   };
 
   const handleBack = () => {
-    if (step === 'otp') {
-      setStep('form');
-    } else {
-      router.push('/');
-    }
+    if (step === "otp") setStep("form");
+    else router.push("/");
   };
 
-  const handleOtpVerify = () => {
-    // In a real app, you would verify the OTP with the backend here
-    router.push('/auth/login');
-  };
-
-  const isFormValid = name && email && password && confirmPassword && password === confirmPassword;
-
-  // Show OTP screen if step is 'otp'
-  if (step === 'otp') {
+  if (step === "otp") {
     return (
-      <OtpModal 
-        email={email} 
+      <OtpModal
+        email={email}
         onBack={handleBack}
-        onVerify={handleOtpVerify}
+        onVerify={() => router.push("/auth/login")}
+        purpose="signup"
       />
     );
   }
 
   return (
-    <AuthPageLayout 
-      backButtonHref="/"
-      contentMaxWidth="sm"
-    >
-      <AuthHeader 
+    <AuthPageLayout backButtonHref="/" contentMaxWidth="sm">
+      <AuthHeader
         title="Create Account"
         subtitle="Join 99min to start posting tasks"
         ticketSize="sm"
@@ -64,63 +66,83 @@ const SignupScreen: React.FC = () => {
         className="mb-6"
       />
 
-      <form className="w-full space-y-4" onSubmit={handleSubmit}>
-        <Input
-          type="text"
-          id="name"
-          label="Name"
-          placeholder="Your name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
+      <form className="w-full space-y-4" onSubmit={handleSubmit(onSubmit)}>
 
-        <Input
-          type="email"
-          id="email"
-          label="Email"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        {/* Name */}
+        <div>
+          <Input
+            type="text"
+            id="name"
+            label="Name"
+            placeholder="Your name"
+            {...register("name")}
+          />
+          {errors.name && (
+            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+          )}
+        </div>
 
-        <Input
-          type="password"
-          id="password"
-          label="Password"
-          placeholder="Create a password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          showPasswordToggle
-          required
-        />
+        {/* Email */}
+        <div>
+          <Input
+            type="email"
+            id="email"
+            label="Email"
+            placeholder="your@email.com"
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+          )}
+        </div>
 
-        <Input
-          type="password"
-          id="confirm-password"
-          label="Confirm Password"
-          placeholder="Confirm your password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          showPasswordToggle
-          required
-        />
+        {/* Password */}
+        <div>
+          <Input
+            type="password"
+            id="password"
+            label="Password"
+            placeholder="Create a password (min 6 chars)"
+            showPasswordToggle
+            {...register("password")}
+          />
+          {errors.password && (
+            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+          )}
+        </div>
 
-        {/* Submit Button */}
+        {/* Confirm Password */}
+        <div>
+          <Input
+            type="password"
+            id="confirm-password"
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            showPasswordToggle
+            {...register("confirmPassword")}
+          />
+          {errors.confirmPassword && (
+            <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
+          )}
+        </div>
+
+        {/* API error */}
+        {apiError && (
+          <p className="text-red-500 text-sm text-center">{apiError}</p>
+        )}
+
         <div className="pt-4">
           <Button
             type="submit"
-            variant={isFormValid ? "primary" : "disabled"}
+            variant="primary"
             size="lg"
             fullWidth
-            disabled={!isFormValid}
+            disabled={!isValid || isSubmitting}
           >
-            Create Account
+            {isSubmitting ? "Creating Account..." : "Create Account"}
           </Button>
         </div>
 
-        {/* Login Footer */}
         <AuthFormFooter
           question="Already have an account?"
           linkText="Login"
@@ -128,7 +150,6 @@ const SignupScreen: React.FC = () => {
           className="mt-4"
         />
 
-        {/* Footer Terms */}
         <div className="pt-8 pb-4">
           <p className="text-center text-textGray text-xs px-4 leading-relaxed opacity-80">
             By creating an account you accept our Terms & Privacy Policy.
