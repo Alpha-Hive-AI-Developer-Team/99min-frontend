@@ -16,7 +16,7 @@ const categories: Category[] = [
   { id: 'design', label: 'Design', icon: <span>🎨</span> },
   { id: 'moving', label: 'Moving', icon: <span>📦</span> },
   { id: 'pet-care', label: 'Pet Care', icon: <span>🐕</span> },
-  { id: 'translation', label: 'Translation', icon: <span>🌍</span> },
+  // { id: 'translation', label: 'Translation', icon: <span>🌍</span> },
 ];
 
 interface CategorySelectorProps {
