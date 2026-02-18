@@ -77,7 +77,7 @@ const Navbar: React.FC = () => {
             })}
 
             {/* Translation Button - Desktop */}
-            <button
+            {/* <button
               onClick={() => console.log("Open translation modal")}
               className="flex items-center gap-2 bg-lightGrey border border-orange/30 rounded-lg px-3 py-2 hover:opacity-90 transition-opacity"
             >
@@ -85,7 +85,7 @@ const Navbar: React.FC = () => {
               <span className="text-textBlack font-bold text-sm">
                 Translate
               </span>
-            </button>
+            </button> */}
           </div>
 
           {/* Right Section: Icons + Menu */}
@@ -101,12 +101,16 @@ const Navbar: React.FC = () => {
 
             {/* Language Dropdown - Hidden on mobile */}
             {/* Translation Button - Mobile */}
-            <button
+            {/* <button
               onClick={() => console.log("Open translation modal")}
               className="flex items-center gap-1 bg-lightGrey border border-orange/30 rounded-lg px-2 py-2 hover:opacity-90 transition-opacity lg:hidden"
             >
               <Globe2 className="w-5 h-5 text-orange shrink-0" />
-            </button>
+            </button> */}
+
+            <div className="md:hidden">
+              <LanguageDropdown compact />
+            </div>
 
             <div className="hidden md:block">
               <LanguageDropdown />
@@ -192,10 +196,7 @@ const Navbar: React.FC = () => {
                 );
               })}
 
-              {/* Language Dropdown in Mobile Menu */}
-              <div className="md:hidden pt-2 border-t border-gray-200">
-                <LanguageDropdown />
-              </div>
+              {/* Language Dropdown removed from mobile menu (now visible in top bar) */}
             </div>
           </div>
         )}
