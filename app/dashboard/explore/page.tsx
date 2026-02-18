@@ -1,43 +1,21 @@
 "use client";
 
 import React, { useState } from 'react';
-import { LayoutGrid } from 'lucide-react';
-import CategoryChip from '@/components/dashboard/CategoryChip';
-import PinnedTaskCard from '@/components/dashboard/PinnedTaskCard';
-import TaskCard from '@/components/dashboard/TaskCard';
-import ExploreHeader from '@/components/dashboard/ExploreHeader';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import ExploreHeader from '@/components/dashboard/ExploreHeader';
+import TaskCard from '@/components/dashboard/TaskCard';
+import PinnedTaskCard from '@/components/dashboard/PinnedTaskCard';
 import TaskDetails, { TaskDetailsData } from '@/components/dashboard/TaskDetails';
+import ShareAdModal from '@/components/dashboard/ShareAdModal';
+import ReportAdModal from '@/components/dashboard/ReportAdModal';
 import dog from '@/public/assets/images/dog.jpg';
-interface TaskCardData {
-  image: string;
-  title: string;
-  description: string;
-  price: string;
-  location: string;
-  timeLeft: string;
-  interest: number;
-  urgent?: boolean;
-  category?: string;
-  postedTime?: string;
-  tags?: string[];
-}
 
 const ExplorePage: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState(0);
   const [selectedTask, setSelectedTask] = useState<TaskDetailsData | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  const categories = [
-    { label: 'All', icon: <span>📋</span> },
-    { label: 'Errands', icon: <span>🏃</span> },
-    { label: 'Tech', icon: <span>💻</span> },
-    { label: 'Design', icon: <span>🎨</span> },
-    { label: 'Moving', icon: <span>📦</span> },
-    { label: 'Pet Care', icon: <span>🐕</span> },
-    { label: 'Translation', icon: <span>🌍</span> },
-  ];
-
-  const tasks: TaskCardData[] = [
+  const tasks: TaskDetailsData[] = [
     {
       image: dog.src,
       title: 'Need someone to walk my dog',
@@ -98,7 +76,6 @@ const ExplorePage: React.FC = () => {
     setSelectedTask(null);
   };
 
-  // Show Task Details if a task is selected
   if (selectedTask) {
     return (
       <DashboardLayout>
@@ -107,42 +84,40 @@ const ExplorePage: React.FC = () => {
     );
   }
 
-  // Show Explore Page
   return (
     <DashboardLayout>
       <div className="bg-inputBg p-6">
         <div className="max-w-6xl mx-auto">
-          
           <ExploreHeader activeTasksCount={6} />
 
-          {/* Category Chips */}
-          {/* <div className="flex gap-3 overflow-x-auto pb-4 mb-2 scrollbar-hide">
-            {categories.map((category, index) => (
-              <CategoryChip
-                key={index}
-                label={category.label}
-                icon={category.icon}
-                active={index === activeCategory}
-                onClick={() => setActiveCategory(index)}
-              />
-            ))}
-          </div> */}
-
-          {/* Task Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <PinnedTaskCard 
-              onClick={() => handleTaskClick(pinnedTask)}
-            />
+            <PinnedTaskCard onClick={() => handleTaskClick(pinnedTask)} />
+
             {tasks.map((task, index) => (
-              <TaskCard 
-                key={index} 
+              <TaskCard
+                key={index}
                 {...task}
                 onClick={() => handleTaskClick(task)}
+                onShare={() => setIsShareModalOpen(true)}
+                onReport={() => setIsReportModalOpen(true)}
               />
             ))}
           </div>
-
         </div>
+
+        {/* Share Modal */}
+        <ShareAdModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          onShare={(platform) => console.log('Shared on:', platform)}
+        />
+
+        {/* Report Modal */}
+        <ReportAdModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          onSubmit={(reason, details) => console.log('Report submitted:', { reason, details })}
+        />
       </div>
     </DashboardLayout>
   );

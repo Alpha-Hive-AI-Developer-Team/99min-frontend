@@ -11,6 +11,8 @@ import TaskDescription from './TaskDescription';
 import TaskTags from './TaskTags';
 import TaskDetailsCTA from './TaskDetailsCTA';
 import dog from '@/public/assets/images/dog.jpg';
+import { Flag, Share2 } from 'lucide-react';
+
 export interface TaskDetailsData {
   image: string;
   title: string;
@@ -34,6 +36,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [message, setMessage] = useState(''); // <-- Added message state
 
   const {
     image,
@@ -48,6 +51,11 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
     postedTime = 'Posted just now',
     tags = ['#urgent', '#pets', '#outdoor'],
   } = task;
+
+  const handleSendMessage = () => {
+    console.log('Message sent:', message);
+    setMessage(''); // Clear after sending
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -90,6 +98,25 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
   </div>
 </div>
 
+          {/* Overlay Buttons */}
+          <div className="absolute top-4 left-4 flex gap-2 z-10">
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow hover:bg-white transition"
+              aria-label="Share"
+            >
+               <Share2 className="w-4 h-4 text-orange" />
+            </button>
+
+            <button
+              onClick={() => setIsReportModalOpen(true)}
+              className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow hover:bg-white transition"
+              aria-label="Report"
+            >
+               <Flag className="w-4 h-4 text-orange" />
+            </button>
+          </div>
+        </div>
 
         <TaskHeader
           title={title}
@@ -109,6 +136,28 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
           <TaskDescription description={description} />
 
           <TaskTags tags={tags} />
+
+          {/* ---------- MESSAGE TEXTAREA ---------- */}
+          <div className="mt-6">
+            <label htmlFor="message" className="block text-sm font-bold text-gray-900 mb-2">
+              Message
+            </label>
+            <textarea
+              id="message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Write a message to the task poster..."
+              className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              rows={4}
+            />
+            <button
+              type="button"
+              onClick={handleSendMessage}
+              className="mt-2 bg-orange text-white px-4 py-2 rounded-xl font-bold hover:bg-primary/90 transition"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
 
@@ -120,7 +169,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
         onClose={() => setIsReportModalOpen(false)}
         onSubmit={(reason, details) => {
           console.log('Report submitted:', { reason, details });
-          // Handle report submission here
         }}
       />
 
@@ -128,10 +176,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
       <ShareAdModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        onShare={(platform) => {
-          console.log('Share on:', platform);
-          // Handle sharing here
-        }}
+        onShare={(platform) => console.log('Share on:', platform)}
       />
 
       {/* Delete Ad Modal */}
@@ -140,8 +185,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={() => {
           console.log('Ad deleted');
-          // Handle ad deletion here
-          // You might want to navigate back or show a success message
           onBack();
         }}
       />
