@@ -3,7 +3,7 @@
 import React from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import NotificationCard, { Notification } from '@/components/dashboard/NotificationCard';
-import { Bell, MessageSquare, Clock, CheckCircle2, InfoIcon } from 'lucide-react';
+import { Bell, MessageSquare, Clock, InfoIcon } from 'lucide-react';
 
 const NotificationsPage: React.FC = () => {
   const notifications: Notification[] = [
@@ -78,7 +78,7 @@ const NotificationsPage: React.FC = () => {
             <div className="text-center py-12">
               <Bell className="w-12 h-12 text-textGray mx-auto mb-4 opacity-50" />
               <p className="text-textGray text-lg">No notifications yet</p>
-              <p className="text-textGray text-sm mt-2">You'll see updates here when they arrive</p>
+              <p className="text-textGray text-sm mt-2">You&apos;ll see updates here when they arrive</p>
             </div>
           )}
         </div>
