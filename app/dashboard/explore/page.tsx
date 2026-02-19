@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import ExploreHeader from '@/components/dashboard/ExploreHeader';
 import TaskCard from '@/components/dashboard/TaskCard';
@@ -8,88 +8,128 @@ import PinnedTaskCard from '@/components/dashboard/PinnedTaskCard';
 import TaskDetails, { TaskDetailsData } from '@/components/dashboard/TaskDetails';
 import ShareAdModal from '@/components/dashboard/ShareAdModal';
 import ReportAdModal from '@/components/dashboard/ReportAdModal';
-import dog from '@/public/assets/images/dog.jpg';
+import { tasksApi } from '@/utils/api';
 
-interface TaskCardData {
-  image: string;
+// Shape of a task as returned by the backend
+interface ApiTask {
+  _id: string;
   title: string;
   description: string;
-  price: string;
-  location: string;
-  timeLeft: string;
-  interest: number;
-  urgent?: boolean;
-  category?: string;
-  postedTime?: string;
-  tags?: string[];
+  budget: { min: number; max: number };
+  location: { label: string };
+  expiresAt: string;
+  createdAt: string;
+  interestCount: number;
+  urgent: boolean;
+  category: string;
+  tags: string[];
+  media: string[];
 }
 
+interface ApiListResponse {
+  data: ApiTask[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatTimeLeft(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  if (diff <= 0) return 'Expired';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  return `${hrs}h ${mins % 60}m`;
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} minutes ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hours ago`;
+  return `${Math.floor(hrs / 24)} days ago`;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const ExplorePage: React.FC = () => {
+  const [tasks, setTasks] = useState<TaskDetailsData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedTask, setSelectedTask] = useState<TaskDetailsData | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
-  const tasks: TaskDetailsData[] = [
-    {
-      image: dog.src,
-      title: 'Need someone to walk my dog',
-      description: "Looking for someone to walk my golden retriever for 30 mins in Central Park. He's friendly and loves treats!",
-      price: '20',
-      location: 'Manhattan, NY',
-      timeLeft: '45 minutes',
-      interest: 3,
-      urgent: true,
-      category: 'Pet Care',
-      postedTime: 'Posted just now',
-      tags: ['#urgent', '#pets', '#outdoor'],
-    },
-    {
-      image: dog.src,
-      title: 'Quick photo editing needed',
-      description: 'Need 5 product photos edited - background removal and color correction. Files ready to share.',
-      price: '35',
-      location: 'Remote',
-      timeLeft: '72 minutes',
-      interest: 7,
-      category: 'Design',
-      postedTime: 'Posted 2 hours ago',
-      tags: ['#design', '#photo', '#editing'],
-    },
-    {
-      image: dog.src,
-      title: 'Grocery shopping assistance',
-      description: 'Need someone to pick up groceries from Whole Foods. I\'ll send the list. Delivery to my apartment.',
-      price: '25',
-      location: 'Queens, NY',
-      timeLeft: '55 minutes',
-      interest: 5,
-      category: 'Errands',
-      postedTime: 'Posted 1 hour ago',
-      tags: ['#errands', '#shopping', '#delivery'],
-    },
-  ];
+  // ─── Fetch tasks from API ────────────────────────────────────────────────
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        const res = await tasksApi.list({ status: 'active', sort: 'newest' }) as ApiListResponse;
 
-  const pinnedTask: TaskDetailsData = {
-    image: dog.src,
-    title: 'Perfect Task Title: Clear and Specific',
-    description: 'Write a detailed description that includes what you need, when you need it, and any special requirements. Be clear and friendly!',
-    price: '25-50',
-    location: 'Your Location',
-    timeLeft: '99 minutes',
-    interest: 0,
-    category: 'Example',
-    postedTime: 'Posted just now',
-    tags: ['#example', '#tutorial', '#guide'],
+        const mapped: TaskDetailsData[] = res.data.map((task: ApiTask) => ({
+          _id: task._id,
+          image: task.media?.[0] ?? '',
+          title: task.title,
+          description: task.description,
+          price:
+            task.budget.min === task.budget.max
+              ? `${task.budget.min}`
+              : `${task.budget.min}-${task.budget.max}`,
+          location: task.location.label,
+          timeLeft: formatTimeLeft(task.expiresAt),
+          interest: task.interestCount ?? 0,
+          urgent: task.urgent,
+          category: task.category,
+          postedTime: `Posted ${timeAgo(task.createdAt)}`,
+          tags: task.tags?.map((t) => `#${t}`) ?? [],
+        }));
+
+        setTasks(mapped);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to load tasks');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  // ─── Handlers ────────────────────────────────────────────────────────────
+  const handleTaskClick = (task: TaskDetailsData) => setSelectedTask(task);
+  const handleBack = () => setSelectedTask(null);
+
+  const handleShare = (taskId: string) => {
+    setActiveTaskId(taskId);
+    setIsShareModalOpen(true);
+    tasksApi.share(taskId).catch(console.error);
   };
 
-  const handleTaskClick = (task: TaskDetailsData) => {
-    setSelectedTask(task);
+  const handleReport = (taskId: string) => {
+    setActiveTaskId(taskId);
+    setIsReportModalOpen(true);
   };
 
-  const handleBack = () => {
-    setSelectedTask(null);
+  const handleReportSubmit = async (reason: string, details: string) => {
+    if (!activeTaskId) return;
+    try {
+      await tasksApi.report(activeTaskId, { reason, details });
+      setIsReportModalOpen(false);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to submit report');
+    }
   };
 
+  // ─── Task detail view ────────────────────────────────────────────────────
   if (selectedTask) {
     return (
       <DashboardLayout>
@@ -98,44 +138,57 @@ const ExplorePage: React.FC = () => {
     );
   }
 
+  // ─── Main view ───────────────────────────────────────────────────────────
   return (
-
     <DashboardLayout>
       <div className="bg-inputBg p-6">
         <div className="max-w-6xl mx-auto">
-          <ExploreHeader activeTasksCount={6} />
+          <ExploreHeader activeTasksCount={tasks.length} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <PinnedTaskCard onClick={() => handleTaskClick(pinnedTask)} />
+          {loading && (
+            <p className="text-center text-textGray py-12">Loading tasks...</p>
+          )}
 
-            {tasks.map((task, index) => (
-              <TaskCard
-                key={index}
-                {...task}
-                onClick={() => handleTaskClick(task)}
-                onShare={() => setIsShareModalOpen(true)}
-                onReport={() => setIsReportModalOpen(true)}
-              />
-            ))}
-          </div>
+          {error && (
+            <p className="text-center text-red-500 py-12">{error}</p>
+          )}
+
+          {!loading && !error && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              <PinnedTaskCard />
+
+              {tasks.length === 0 ? (
+                <p className="text-textGray text-center col-span-2 py-12">
+                  No active tasks yet. Be the first to post one!
+                </p>
+              ) : (
+                tasks.map((task) => (
+                  <TaskCard
+                    key={task._id}
+                    {...task}
+                    onClick={() => handleTaskClick(task)}
+                    onShare={() => handleShare(task._id)}
+                    onReport={() => handleReport(task._id)}
+                  />
+                ))
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Share Modal */}
         <ShareAdModal
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           onShare={(platform) => console.log('Shared on:', platform)}
         />
 
-        {/* Report Modal */}
         <ReportAdModal
           isOpen={isReportModalOpen}
           onClose={() => setIsReportModalOpen(false)}
-          onSubmit={(reason, details) => console.log('Report submitted:', { reason, details })}
+          onSubmit={handleReportSubmit}
         />
       </div>
     </DashboardLayout>
-   
   );
 };
 

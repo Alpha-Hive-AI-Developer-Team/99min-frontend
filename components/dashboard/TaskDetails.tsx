@@ -12,8 +12,11 @@ import TaskTags from './TaskTags';
 import TaskDetailsCTA from './TaskDetailsCTA';
 import dog from '@/public/assets/images/dog.jpg';
 import { Flag, Share2 } from 'lucide-react';
+import Image from 'next/image';
+import { tasksApi } from '@/utils/api';
 
 export interface TaskDetailsData {
+  _id: string;
   image: string;
   title: string;
   description: string;
@@ -36,10 +39,11 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [message, setMessage] = useState(''); // <-- Added message state
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
 
   const {
-    image,
     title,
     description,
     price,
@@ -47,14 +51,40 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
     timeLeft,
     interest,
     urgent = false,
-    category = 'Pet Care',
+    category = 'General',
     postedTime = 'Posted just now',
-    tags = ['#urgent', '#pets', '#outdoor'],
+    tags = [],
   } = task;
 
-  const handleSendMessage = () => {
-    console.log('Message sent:', message);
-    setMessage(''); // Clear after sending
+  // Use real image from API, fall back to placeholder
+  const imageSrc = task.image && task.image.length > 0 ? task.image : dog.src;
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    setSending(true);
+    setSendError('');
+    try {
+      await tasksApi.respond(task._id, { message: message.trim() });
+      setMessage('');
+    } catch (err: unknown) {
+      setSendError(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleReportSubmit = async (reason: string, details: string) => {
+    try {
+      await tasksApi.report(task._id, { reason, details });
+      setIsReportModalOpen(false);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to submit report');
+    }
+  };
+
+  const handleShare = (platform: string) => {
+    tasksApi.share(task._id).catch(console.error);
+    console.log('Shared on:', platform);
   };
 
   return (
@@ -66,22 +96,23 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
       />
 
       <div className="max-w-7xl mx-auto pb-24">
+
+        {/* ─── Task Image ───────────────────────────────────────────────────── */}
         <div className="relative w-full h-96 mb-0">
-          {/* Image */}
-          <img
-            src={dog.src}
+          <Image
+            src={imageSrc}
             alt={title}
-            className="w-full h-full object-cover rounded-b-4xl"
+            fill
+            className="object-cover rounded-b-4xl"
           />
 
-          {/* Overlay Buttons */}
           <div className="absolute top-4 left-4 flex gap-2 z-10">
             <button
               onClick={() => setIsShareModalOpen(true)}
               className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow hover:bg-white transition"
               aria-label="Share"
             >
-               <Share2 className="w-4 h-4 text-orange" />
+              <Share2 className="w-4 h-4 text-orange" />
             </button>
 
             <button
@@ -89,7 +120,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
               className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow hover:bg-white transition"
               aria-label="Report"
             >
-               <Flag className="w-4 h-4 text-orange" />
+              <Flag className="w-4 h-4 text-orange" />
             </button>
           </div>
         </div>
@@ -113,10 +144,10 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
 
           <TaskTags tags={tags} />
 
-          {/* ---------- MESSAGE TEXTAREA ---------- */}
+          {/* ─── Respond / Message ──────────────────────────────────────────── */}
           <div className="mt-6">
             <label htmlFor="message" className="block text-sm font-bold text-gray-900 mb-2">
-              Message
+              Send a Message
             </label>
             <textarea
               id="message"
@@ -126,12 +157,16 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
               className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               rows={4}
             />
+            {sendError && (
+              <p className="text-red-500 text-xs mt-1">{sendError}</p>
+            )}
             <button
               type="button"
               onClick={handleSendMessage}
-              className="mt-2 bg-orange text-white px-4 py-2 rounded-xl font-bold hover:bg-primary/90 transition"
+              disabled={sending || !message.trim()}
+              className="mt-2 bg-orange text-white px-4 py-2 rounded-xl font-bold hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Send
+              {sending ? 'Sending...' : 'Send'}
             </button>
           </div>
         </div>
@@ -139,28 +174,22 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onBack }) => {
 
       <TaskDetailsCTA />
 
-      {/* Report Ad Modal */}
       <ReportAdModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
-        onSubmit={(reason, details) => {
-          console.log('Report submitted:', { reason, details });
-        }}
+        onSubmit={handleReportSubmit}
       />
 
-      {/* Share Ad Modal */}
       <ShareAdModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        onShare={(platform) => console.log('Share on:', platform)}
+        onShare={handleShare}
       />
 
-      {/* Delete Ad Modal */}
       <DeleteAdModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={() => {
-          console.log('Ad deleted');
           onBack();
         }}
       />

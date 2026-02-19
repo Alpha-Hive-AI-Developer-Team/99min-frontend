@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, IconContainer } from "@/components/ui";
 import { AuthPageLayout, PasswordStrengthMeter, PasswordRequirements } from "./shared";
-import { authApi } from "@/utils/api";
+import { authApi } from "@/utils/api/auth.api";
 import { resetPasswordSchema, ResetPasswordFormData } from "@/validators/auth-schema";
 
 interface NewPasswordModalProps {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { MapPin, Clock, Share2, Flag } from 'lucide-react';
-
+import Image from 'next/image';
 interface TaskCardProps {
   image: string;
   title: string;
@@ -36,12 +36,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
       className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
     >
       <div className="relative mb-4">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-[200px] object-cover rounded-xl"
-        />
-
+      <div className="relative w-full h-[200px] rounded-xl overflow-hidden">
+  <Image
+    src={image }
+    alt={title}
+    fill
+    className="object-cover"
+  />
+</div>
         {/* Overlay Buttons */}
         <div className="absolute top-3 left-3 flex gap-2 z-10">
           {onShare && (

@@ -102,7 +102,7 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ onBack }) => {
               ))
             ) : (
               <div className="py-8 text-center text-textGray">
-                <p>No results found for "{searchQuery}"</p>
+                <p>No results found for {searchQuery}</p>
               </div>
             )}
           </div>

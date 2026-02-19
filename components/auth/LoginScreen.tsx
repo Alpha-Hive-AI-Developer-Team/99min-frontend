@@ -8,8 +8,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@/components/ui";
 import { AuthPageLayout, AuthHeader, AuthFormFooter } from "./shared";
-import { authApi } from "@/utils/api";
+import { authApi } from "@/utils/api/auth.api";
 import { useAuth } from "@/store/auth-context";
+import { setAccessToken } from "@/utils/api";
 import { loginSchema, LoginFormData } from "@/validators/auth-schema";
 
 const LoginScreen: React.FC = () => {
@@ -26,16 +27,17 @@ const LoginScreen: React.FC = () => {
     mode: "onChange",
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    setApiError("");
-    try {
-      const res = await authApi.login({ email: data.email, password: data.password });
-      setAuth(res.data.user, res.data.accessToken);
-      router.push("/dashboard/explore");
-    } catch (err: unknown) {
-      setApiError(err instanceof Error ? err.message : "Login failed");
-    }
-  };
+const onSubmit = async (data: LoginFormData) => {
+  setApiError("");
+  try {
+    const res = await authApi.login({ email: data.email, password: data.password });
+    setAccessToken(res.data.accessToken);       
+    setAuth(res.data.user, res.data.accessToken);
+    router.push("/dashboard/explore");
+  } catch (err: unknown) {
+    setApiError(err instanceof Error ? err.message : "Login failed");
+  }
+};
 
   return (
     <AuthPageLayout
@@ -111,3 +113,4 @@ const LoginScreen: React.FC = () => {
 };
 
 export default LoginScreen;
+

@@ -1,43 +1,63 @@
 "use client";
 
-import React, { useState } from 'react';
-import PageHeader from '@/components/shared/PageHeader';
-import SettingsSection from './SettingsSection';
-import LocationToggleCard from './LocationToggleCard';
-import LocationCard from './LocationCard';
-import RangeSlider from './RangeSlider';
-import QuickSelectButtons from './QuickSelectButtons';
-import { Navigation, MapPin } from 'lucide-react';
+import React from "react";
+import PageHeader from "@/components/shared/PageHeader";
+import SettingsSection from "./SettingsSection";
+import LocationToggleCard from "./LocationToggleCard";
+import LocationCard from "./LocationCard";
+import RangeSlider from "./RangeSlider";
+import QuickSelectButtons from "./QuickSelectButtons";
+import { Navigation, MapPin } from "lucide-react";
+import { useLocationSettings } from "@/hooks/UseLocationSetting";
 
 interface LocationPageProps {
   onBack?: () => void;
 }
 
 const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
-  const [autoDetect, setAutoDetect] = useState(true);
-  const [searchRadius, setSearchRadius] = useState(10);
+  const { settings, loading, saving, error, handleUpdate } = useLocationSettings();
 
   const quickSelectOptions = [5, 10, 25, 50];
+
+  if (loading) {
+    return (
+      <div className="bg-white min-h-screen">
+        <PageHeader title="Location" onBack={onBack} maxWidth="7xl" />
+        <div className="max-w-7xl mx-auto px-4 py-8 space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
       <PageHeader title="Location" onBack={onBack} maxWidth="7xl" />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        {/* Auto-detect Location Section */}
+        {error && (
+          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>
+        )}
+        {saving && (
+          <div className="p-3 bg-blue-50 text-blue-600 text-sm rounded-lg">Saving...</div>
+        )}
+
+        {/* Auto-detect */}
         <div>
           <LocationToggleCard
             icon={<Navigation className="w-5 h-5" />}
             title="Auto-detect Location"
             description="Use your current location"
-            enabled={autoDetect}
-            onChange={setAutoDetect}
+            enabled={settings?.autoDetect ?? false}
+            onChange={(val) => handleUpdate({ autoDetect: val })}
           />
         </div>
 
-        {/* Current Location Section */}
+        {/* Current Location */}
         <SettingsSection title="CURRENT LOCATION">
-          <div className="px-4  py-4">
+          <div className="px-4 py-4">
             <LocationCard
               icon={<MapPin className="w-5 h-5" />}
               location="New York, NY"
@@ -46,14 +66,14 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
           </div>
         </SettingsSection>
 
-        {/* Search Radius Section */}
+        {/* Search Radius */}
         <SettingsSection title="SEARCH RADIUS">
           <div className="px-4 bg-inputBg py-4">
             <RangeSlider
               min={1}
               max={50}
-              value={searchRadius}
-              onChange={setSearchRadius}
+              value={settings?.defaultRadius ?? 10}
+              onChange={(val) => handleUpdate({ defaultRadius: val })}
               label="Distance"
               minLabel="1 mi"
               maxLabel="50 mi"
@@ -62,13 +82,13 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
           </div>
         </SettingsSection>
 
-        {/* Quick Select Section */}
+        {/* Quick Select */}
         <SettingsSection title="QUICK SELECT">
           <div className="px-4 py-4">
             <QuickSelectButtons
               options={quickSelectOptions}
-              selected={searchRadius}
-              onChange={setSearchRadius}
+              selected={settings?.defaultRadius ?? 10}
+              onChange={(val) => handleUpdate({ defaultRadius: val })}
               unit="mi"
             />
           </div>
@@ -79,4 +99,3 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
 };
 
 export default LocationPage;
-

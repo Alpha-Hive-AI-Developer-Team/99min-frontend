@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, OTPInput, IconContainer } from "@/components/ui";
 import { AuthPageLayout } from "./shared";
-import { authApi } from "@/utils/api";
+import { authApi } from "@/utils/api/auth.api";
 import { otpSchema, OtpFormData } from "@/validators/auth-schema";
 
 interface OtpModalProps {

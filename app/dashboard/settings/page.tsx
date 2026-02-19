@@ -1,24 +1,28 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import SettingsHeader from '@/components/settings/SettingsHeader';
-import UserProfileCard from '@/components/settings/UserProfileCard';
-import SettingsSection from '@/components/settings/SettingsSection';
-import SettingsItem from '@/components/settings/SettingsItem';
-import LogOutButton from '@/components/settings/LogOutButton';
-import ProfilePage from '@/components/settings/ProfilePage';
-import NotificationsPage from '@/components/settings/NotificationsPage';
-import LocationPage from '@/components/settings/LocationPage';
-import PrivacyPage from '@/components/settings/PrivacyPage';
-import HelpCenterPage from '@/components/settings/HelpCenterPage';
-import PaymentMethodsPage from '@/components/settings/PaymentMethodsPage';
-import ConfirmationModal from '@/components/shared/ConfirmationModal';
-import { User, Bell, MapPin, CreditCard, Shield, HelpCircle, Lock } from 'lucide-react';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import SettingsHeader from "@/components/settings/SettingsHeader";
+import UserProfileCard from "@/components/settings/UserProfileCard";
+import SettingsSection from "@/components/settings/SettingsSection";
+import SettingsItem from "@/components/settings/SettingsItem";
+import LogOutButton from "@/components/settings/LogOutButton";
+import ProfilePage from "@/components/settings/ProfilePage";
+import NotificationsPage from "@/components/settings/NotificationsPage";
+import LocationPage from "@/components/settings/LocationPage";
+import PrivacyPage from "@/components/settings/PrivacyPage";
+import HelpCenterPage from "@/components/settings/HelpCenterPage";
+import PaymentMethodsPage from "@/components/settings/PaymentMethodsPage";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import { useProfile } from "@/hooks/UseProfile";
+import { UpdateProfilePayload } from "@/services/settings.service";
+import { User, Bell, MapPin, CreditCard, Shield, HelpCircle, Lock } from "lucide-react";
 
 const SettingsPage: React.FC = () => {
   const router = useRouter();
+  const { profile } = useProfile();
+
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
@@ -28,29 +32,21 @@ const SettingsPage: React.FC = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleLogout = () => {
-    // Handle logout logic here
-    console.log('Logging out...');
-    router.push('/auth/login');
+    router.push("/auth/login");
   };
 
-  const handleProfileSubmit = (data: any) => {
-    console.log('Profile saved:', data);
+  const handleProfileSubmit = (data: UpdateProfilePayload) => {
     setShowProfile(false);
   };
 
-  // Show Profile page if showProfile is true
   if (showProfile) {
     return (
       <DashboardLayout>
-        <ProfilePage
-          onBack={() => setShowProfile(false)}
-          onSubmit={handleProfileSubmit}
-        />
+        <ProfilePage onBack={() => setShowProfile(false)} onSubmit={handleProfileSubmit} />
       </DashboardLayout>
     );
   }
 
-  // Show Notifications page if showNotifications is true
   if (showNotifications) {
     return (
       <DashboardLayout>
@@ -59,7 +55,6 @@ const SettingsPage: React.FC = () => {
     );
   }
 
-  // Show Location page if showLocation is true
   if (showLocation) {
     return (
       <DashboardLayout>
@@ -68,7 +63,6 @@ const SettingsPage: React.FC = () => {
     );
   }
 
-  // Show Privacy page if showPrivacy is true
   if (showPrivacy) {
     return (
       <DashboardLayout>
@@ -77,7 +71,6 @@ const SettingsPage: React.FC = () => {
     );
   }
 
-  // Show Help Center page if showHelpCenter is true
   if (showHelpCenter) {
     return (
       <DashboardLayout>
@@ -86,7 +79,6 @@ const SettingsPage: React.FC = () => {
     );
   }
 
-  // Show Payment Methods page if showPaymentMethods is true
   if (showPaymentMethods) {
     return (
       <DashboardLayout>
@@ -95,20 +87,24 @@ const SettingsPage: React.FC = () => {
     );
   }
 
+  // Derive display values from real profile data
+  const displayName = profile?.name ?? "—";
+  const displayInitial = profile?.name?.[0]?.toUpperCase() ?? "?";
+
   return (
     <DashboardLayout>
-      <div className="min-h-screen  bg-inputBg">
+      <div className="min-h-screen bg-inputBg">
         <div className="max-w-4xl bg-white mx-auto px-4">
           <SettingsHeader />
 
-          {/* User Profile Card */}
+          {/* Real profile data */}
           <UserProfileCard
-            name="John Doe"
-            email="john.doe@example.com"
-            initial="J"
+            name={displayName}
+            initial={displayInitial}
+            avatar={profile?.avatar}
           />
 
-          {/* ACCOUNT Section */}
+          {/* ACCOUNT */}
           <SettingsSection title="ACCOUNT">
             <div className="px-4">
               <SettingsItem
@@ -133,7 +129,7 @@ const SettingsPage: React.FC = () => {
             </div>
           </SettingsSection>
 
-          {/* BILLING Section */}
+          {/* BILLING */}
           <SettingsSection title="BILLING">
             <div className="px-4">
               <SettingsItem
@@ -151,7 +147,7 @@ const SettingsPage: React.FC = () => {
             </div>
           </SettingsSection>
 
-          {/* SUPPORT Section */}
+          {/* SUPPORT */}
           <SettingsSection title="SUPPORT">
             <div className="px-4">
               <SettingsItem
@@ -169,19 +165,16 @@ const SettingsPage: React.FC = () => {
             </div>
           </SettingsSection>
 
-          {/* Log Out Button */}
           <div className="mb-8">
             <LogOutButton onClick={() => setIsLogoutModalOpen(true)} />
           </div>
 
-          {/* Version Footer */}
           <div className="text-center">
             <p className="text-textGray text-xs">Version 1.0.0</p>
           </div>
         </div>
       </div>
 
-      {/* Logout Confirmation Modal */}
       <ConfirmationModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
@@ -196,4 +189,3 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
-
