@@ -1,28 +1,53 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import PageHeader from "@/components/shared/PageHeader";
 import SettingsSection from "./SettingsSection";
 import RadioButton from "./RadioButton";
 import NotificationToggle from "./NotificationToggle";
 import BlockedUsersSection from "./BlockedUsersSection";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { Button } from "@/components/ui";
-
 import { usePrivacySettings } from "@/hooks/UsePrivacySetting";
+import { deleteMyAccount } from "@/services/accountactions.service";
+import { downloadMyData } from "@/services/accountactions.service";
 
 interface PrivacyPageProps {
   onBack?: () => void;
 }
 
 const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
-  const { settings, loading, saving, error, handleUpdate } = usePrivacySettings();
+  const router = useRouter();
+  const { settings, loading, error, handleUpdate } = usePrivacySettings();
 
-  const handleDownloadData = () => {
-    console.log("Downloading data...");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const handleDownloadData = async () => {
+    try {
+      setIsDownloading(true);
+      setActionError(null);
+      await downloadMyData(); // handles blob + anchor click internally
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to download data");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
-  const handleDeleteAccount = () => {
-    console.log("Delete account clicked");
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      setActionError(null);
+      await deleteMyAccount();
+      router.push("/auth/login");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to delete account");
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -43,11 +68,10 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
       <PageHeader title="Privacy & Safety" onBack={onBack} maxWidth="7xl" />
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        {error && (
-          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>
-        )}
-        {saving && (
-          <div className="p-3 bg-blue-50 text-blue-600 text-sm rounded-lg">Saving...</div>
+        {(error || actionError) && (
+          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">
+            {error || actionError}
+          </div>
         )}
 
         {/* Profile Visibility */}
@@ -69,7 +93,6 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
               checked={settings?.profileVisibility === "private"}
               onChange={() => handleUpdate({ profileVisibility: "private" })}
             />
-            {/* Note: backend supports "friends" not "hidden" */}
             <RadioButton
               name="profileVisibility"
               value="friends"
@@ -125,7 +148,6 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
           </div>
         </SettingsSection>
 
-        {/* Blocked Users */}
         <BlockedUsersSection />
 
         {/* Data & Privacy */}
@@ -133,22 +155,36 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
           <div className="px-4 py-4 space-y-4">
             <button
               onClick={handleDownloadData}
-              className="w-full px-4 bg-inputBg py-4 rounded-xl text-left text-textBlack font-medium hover:text-orange transition-colors"
+              disabled={isDownloading}
+              className="w-full px-4 bg-inputBg py-4 rounded-xl text-left text-textBlack font-medium hover:text-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Download My Data
+              {isDownloading ? "Preparing download…" : "Download My Data"}
             </button>
             <Button
               variant="secondary"
               size="md"
               fullWidth
-              onClick={handleDeleteAccount}
-              className="bg-lightRed text-red text-start hover:bg-red-50 border-0"
+              onClick={() => setIsDeleteModalOpen(true)}
+              disabled={isDeleting}
+              className="bg-lightRed text-red text-start hover:bg-red-50 border-0 disabled:opacity-50"
             >
-              <span className="text-red">Delete My Account</span>
+              <span className="text-red">
+                {isDeleting ? "Deleting…" : "Delete My Account"}
+              </span>
             </Button>
           </div>
         </SettingsSection>
       </div>
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        description="This is permanent and cannot be undone. All your data, tasks, and history will be removed immediately."
+        confirmText="Delete My Account"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

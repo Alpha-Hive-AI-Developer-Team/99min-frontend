@@ -4,6 +4,9 @@ import { request } from "@/utils/api/client";
 
 export interface Profile {
   userId: string;
+  // FIX: added email — backend now merges this from the User collection
+  // so it is always present in the GET /api/profile response
+  email: string;
   name?: string;
   username?: string;
   bio?: string;
@@ -101,7 +104,17 @@ export interface AddPaymentMethodPayload {
   expYear?: number;
   isDefault?: boolean;
 }
-
+export interface BlockedUser {
+  _id: string;
+  blockerId: string;
+  blockedId: {
+    _id: string;
+    name: string;
+    username?: string;
+    avatar?: string;
+  };
+  createdAt: string;
+}
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
 export async function getProfile(): Promise<{ success: boolean; data: Profile }> {
@@ -191,3 +204,22 @@ export async function deletePaymentMethod(
 ): Promise<{ success: boolean; data: { message: string } }> {
   return request(`/api/payment-methods/${methodId}`, { method: "DELETE" });
 }
+
+// ─── Blocked Users ────────────────────────────────────────────────────────────
+
+export async function getBlockedUsers(): Promise<{ success: boolean; data: BlockedUser[] }> {
+  return request("/api/blocked-users");
+}
+
+export async function blockUser(
+  userId: string
+): Promise<{ success: boolean; message: string; data: BlockedUser }> {
+  return request(`/api/blocked-users/${userId}`, { method: "POST" });
+}
+
+export async function unblockUser(
+  userId: string
+): Promise<{ success: boolean; message: string }> {
+  return request(`/api/blocked-users/${userId}`, { method: "DELETE" });
+}
+

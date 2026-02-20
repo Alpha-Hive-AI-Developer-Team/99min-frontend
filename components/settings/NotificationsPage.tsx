@@ -11,7 +11,7 @@ interface NotificationsPageProps {
 }
 
 const NotificationsPage: React.FC<NotificationsPageProps> = ({ onBack }) => {
-  const { settings, loading, saving, error, handleToggle } = useNotificationSettings();
+  const { settings, loading, error, handleToggle } = useNotificationSettings();
 
   if (loading) {
     return (
@@ -35,11 +35,8 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ onBack }) => {
           <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>
         )}
 
-        {saving && (
-          <div className="mb-4 p-3 bg-blue-50 text-blue-600 text-sm rounded-lg">Saving...</div>
-        )}
+        {/* REMOVED: saving banner — toggles are optimistic, no banner needed */}
 
-        {/* Notification Channels */}
         <SettingsSection title="NOTIFICATION CHANNELS">
           <div className="px-4">
             <NotificationToggle
@@ -63,7 +60,6 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ onBack }) => {
           </div>
         </SettingsSection>
 
-        {/* Notification Types */}
         <SettingsSection title="NOTIFICATION TYPES">
           <div className="px-4">
             <NotificationToggle

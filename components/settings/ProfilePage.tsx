@@ -13,6 +13,19 @@ interface ProfilePageProps {
   onSubmit?: (data: UpdateProfilePayload) => void;
 }
 
+/**
+ * Safely converts a dob value (Date object, ISO string, or undefined) to a
+ * yyyy-MM-dd string suitable for an <input type="date" />.
+ */
+function formatDobForInput(dob: string | Date | undefined | null): string {
+  if (!dob) return "";
+  // FIX: dob could be a JS Date from the API, not just an ISO string.
+  // Calling .split("T") on a Date object would throw.
+  const date = new Date(dob);
+  if (isNaN(date.getTime())) return "";
+  return date.toISOString().split("T")[0];
+}
+
 const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onSubmit }) => {
   const router = useRouter();
   const { profile, loading, saving, error, handleUpdateProfile } = useProfile();
@@ -56,14 +69,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onSubmit }) => {
           onImageChange={() => console.log("Change image")}
         />
 
-        {/* Pass existing profile data as default values into the form */}
         <ProfileForm
           defaultValues={{
             name: profile?.name ?? "",
             username: profile?.username ?? "",
             bio: profile?.bio ?? "",
             phone: profile?.phone ?? "",
-            dob: profile?.dob ? profile.dob.split("T")[0] : "",
+            // FIX: safely handle dob whether it's a Date object or an ISO string
+            dob: formatDobForInput(profile?.dob),
           }}
           saving={saving}
           onSubmit={handleSubmit}

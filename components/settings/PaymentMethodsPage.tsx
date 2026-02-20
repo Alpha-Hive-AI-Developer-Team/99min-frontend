@@ -12,6 +12,16 @@ interface PaymentMethodsPageProps {
   onBack?: () => void;
 }
 
+// FIX: define the accepted card brand type instead of using `any`
+type CardBrand = "visa" | "mastercard" | "amex" | "discover";
+
+const VALID_BRANDS = new Set<CardBrand>(["visa", "mastercard", "amex", "discover"]);
+
+function toCardBrand(brand?: string): CardBrand {
+  if (brand && VALID_BRANDS.has(brand as CardBrand)) return brand as CardBrand;
+  return "visa";
+}
+
 const PaymentMethodsPage: React.FC<PaymentMethodsPageProps> = ({ onBack }) => {
   const { methods, loading, saving, error, handleAdd, handleSetDefault, handleDelete } =
     usePaymentMethods();
@@ -33,8 +43,7 @@ const PaymentMethodsPage: React.FC<PaymentMethodsPageProps> = ({ onBack }) => {
     }
   };
 
-  // Map card number prefix → brand for the stub Stripe flow
-  const detectBrand = (cardNumber: string): string => {
+  const detectBrand = (cardNumber: string): CardBrand => {
     if (cardNumber.startsWith("4")) return "visa";
     if (cardNumber.startsWith("5")) return "mastercard";
     if (cardNumber.startsWith("3")) return "amex";
@@ -50,11 +59,8 @@ const PaymentMethodsPage: React.FC<PaymentMethodsPageProps> = ({ onBack }) => {
     const [expMonth, expYear] = cardData.expiryDate.split("/");
     const brand = detectBrand(cardData.cardNumber);
 
-    // NOTE: In production, you never send raw card data to your own backend.
-    // You'd use Stripe.js to tokenize → get a stripePaymentMethodId, then send that.
-    // For now we stub the ID so the API call matches what the backend expects.
     const success = await handleAdd({
-      stripePaymentMethodId: `pm_stub_${Date.now()}`, // replace with real Stripe token
+      stripePaymentMethodId: `pm_stub_${Date.now()}`,
       type: "card",
       brand,
       last4: cardData.cardNumber.slice(-4),
@@ -95,8 +101,8 @@ const PaymentMethodsPage: React.FC<PaymentMethodsPageProps> = ({ onBack }) => {
             {methods.map((method) => (
               <PaymentMethodCard
                 key={method._id}
-                // Map API fields → component props
-                cardType={(method.brand as any) ?? "visa"}
+                // FIX: use toCardBrand() helper instead of `as any`
+                cardType={toCardBrand(method.brand)}
                 last4={method.last4 ?? "****"}
                 expiryMonth={String(method.expMonth ?? "").padStart(2, "0")}
                 expiryYear={String(method.expYear ?? "").slice(-2)}

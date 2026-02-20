@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getProfile,
   updateProfile,
-  Profile,
-  UpdateProfilePayload,
+  type Profile,
+  type UpdateProfilePayload,
 } from "@/services/settings.service";
+import { getAccessToken, silentRefresh } from "@/utils/api/client";
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -16,6 +17,20 @@ export function useProfile() {
     try {
       setLoading(true);
       setError(null);
+
+      // FIX: accessToken is stored in-memory and starts as null on page load.
+      // If it's missing, run a silent refresh first so the Authorization header
+      // is present when the profile request fires. Without this, the backend
+      // receives an unauthenticated request and mergeWithUser never runs.
+      if (!getAccessToken()) {
+        const refreshed = await silentRefresh();
+        if (!refreshed) {
+          setError("Session expired. Please log in again.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const res = await getProfile();
       setProfile(res.data);
     } catch (err) {
@@ -47,5 +62,12 @@ export function useProfile() {
     []
   );
 
-  return { profile, loading, saving, error, handleUpdateProfile, refetch: fetchProfile };
+  return {
+    profile,
+    loading,
+    saving,
+    error,
+    handleUpdateProfile,
+    refetch: fetchProfile,
+  };
 }

@@ -15,7 +15,7 @@ interface LocationPageProps {
 }
 
 const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
-  const { settings, loading, saving, error, handleUpdate } = useLocationSettings();
+  const { settings, loading, error, handleUpdate } = useLocationSettings();
 
   const quickSelectOptions = [5, 10, 25, 50];
 
@@ -40,11 +40,9 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
         {error && (
           <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>
         )}
-        {saving && (
-          <div className="p-3 bg-blue-50 text-blue-600 text-sm rounded-lg">Saving...</div>
-        )}
 
-        {/* Auto-detect */}
+        {/* REMOVED: saving banner — updates are optimistic, no banner needed */}
+
         <div>
           <LocationToggleCard
             icon={<Navigation className="w-5 h-5" />}
@@ -55,7 +53,6 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
           />
         </div>
 
-        {/* Current Location */}
         <SettingsSection title="CURRENT LOCATION">
           <div className="px-4 py-4">
             <LocationCard
@@ -66,7 +63,6 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
           </div>
         </SettingsSection>
 
-        {/* Search Radius */}
         <SettingsSection title="SEARCH RADIUS">
           <div className="px-4 bg-inputBg py-4">
             <RangeSlider
@@ -82,7 +78,6 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
           </div>
         </SettingsSection>
 
-        {/* Quick Select */}
         <SettingsSection title="QUICK SELECT">
           <div className="px-4 py-4">
             <QuickSelectButtons
