@@ -10,8 +10,8 @@ import BlockedUsersSection from "./BlockedUsersSection";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { Button } from "@/components/ui";
 import { usePrivacySettings } from "@/hooks/UsePrivacySetting";
-import { deleteMyAccount } from "@/services/accountactions.service";
-import { downloadMyData } from "@/services/accountactions.service";
+import { deleteMyAccount } from "@/utils/api/account-action.api";
+import { downloadMyData } from "@/utils/api/account-action.api";
 
 interface PrivacyPageProps {
   onBack?: () => void;

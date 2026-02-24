@@ -1,46 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import ExploreHeader from '@/components/dashboard/ExploreHeader';
-import TaskCard from '@/components/dashboard/TaskCard';
-import PinnedTaskCard from '@/components/dashboard/PinnedTaskCard';
-import TaskDetails, { TaskDetailsData } from '@/components/dashboard/TaskDetails';
-import ShareAdModal from '@/components/dashboard/ShareAdModal';
-import ReportAdModal from '@/components/dashboard/ReportAdModal';
-import { tasksApi } from '@/utils/api';
-
-// Shape of a task as returned by the backend
-interface ApiTask {
-  _id: string;
-  title: string;
-  description: string;
-  budget: { min: number; max: number };
-  location: { label: string };
-  expiresAt: string;
-  createdAt: string;
-  interestCount: number;
-  urgent: boolean;
-  category: string;
-  tags: string[];
-  media: string[];
-}
-
-interface ApiListResponse {
-  data: ApiTask[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    pages: number;
-  };
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import ExploreHeader from "@/components/dashboard/ExploreHeader";
+import TaskCard from "@/components/dashboard/TaskCard";
+import PinnedTaskCard from "@/components/dashboard/PinnedTaskCard";
+import TaskDetails, { TaskDetailsData } from "@/components/dashboard/TaskDetails";
+import ShareAdModal from "@/components/dashboard/ShareAdModal";
+import ReportAdModal from "@/components/dashboard/ReportAdModal";
+import DeleteAdModal from "@/components/dashboard/DeleteAdModal";
+import { useTasks, useShareTask, useReportTask, useDeleteTask } from "@/hooks/UseTasks";
+import { useAuth } from "@/store/auth-context";
+import type { ApiTask } from "@/utils/api/tasks.api";
 
 function formatTimeLeft(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
-  if (diff <= 0) return 'Expired';
+  if (diff <= 0) return "Expired";
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
@@ -50,68 +26,67 @@ function formatTimeLeft(expiresAt: string): string {
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins} minutes ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs} hours ago`;
   return `${Math.floor(hrs / 24)} days ago`;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Extended with posterUserId for chat wiring
+interface TaskWithOwner extends TaskDetailsData {
+  createdBy: string;
+  posterUserId: string;
+}
+
+function mapApiTask(task: ApiTask): TaskWithOwner {
+  return {
+    _id: task._id,
+    image: task.media?.[0] ?? "",
+    title: task.title,
+    description: task.description,
+    price:
+      task.budget.min === task.budget.max
+        ? `${task.budget.min}`
+        : `${task.budget.min}-${task.budget.max}`,
+    location: task.location.label,
+    timeLeft: formatTimeLeft(task.expiresAt),
+    interest: task.interestCount ?? 0,
+    urgent: task.urgent,
+    category: task.category,
+    postedTime: `Posted ${timeAgo(task.createdAt)}`,
+    tags: task.tags?.map((t) => `#${t}`) ?? [],
+    createdBy: task.posterUserId._id,
+    posterUserId: task.posterUserId._id, // for chat
+  };
+}
 
 const ExplorePage: React.FC = () => {
-  const [tasks, setTasks] = useState<TaskDetailsData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedTask, setSelectedTask] = useState<TaskDetailsData | null>(null);
+  const router = useRouter();
+  const [selectedTask, setSelectedTask] = useState<TaskWithOwner | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
-  // ─── Fetch tasks from API ────────────────────────────────────────────────
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const res = await tasksApi.list({ status: 'active', sort: 'newest' }) as ApiListResponse;
+  const { user } = useAuth();
+  const currentUserId = user?._id ?? "";
 
-        const mapped: TaskDetailsData[] = res.data.map((task: ApiTask) => ({
-          _id: task._id,
-          image: task.media?.[0] ?? '',
-          title: task.title,
-          description: task.description,
-          price:
-            task.budget.min === task.budget.max
-              ? `${task.budget.min}`
-              : `${task.budget.min}-${task.budget.max}`,
-          location: task.location.label,
-          timeLeft: formatTimeLeft(task.expiresAt),
-          interest: task.interestCount ?? 0,
-          urgent: task.urgent,
-          category: task.category,
-          postedTime: `Posted ${timeAgo(task.createdAt)}`,
-          tags: task.tags?.map((t) => `#${t}`) ?? [],
-        }));
+  const { data, isLoading, error, refetch } = useTasks({ status: "active", sort: "newest" });
+  const tasks: TaskWithOwner[] = (data?.data ?? []).map(mapApiTask);
 
-        setTasks(mapped);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Failed to load tasks');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { mutate: recordShare } = useShareTask();
+  const { mutateAsync: submitReport } = useReportTask(activeTaskId ?? "");
+  const { mutateAsync: deleteTask } = useDeleteTask();
 
-    fetchTasks();
-  }, []);
-
-  // ─── Handlers ────────────────────────────────────────────────────────────
-  const handleTaskClick = (task: TaskDetailsData) => setSelectedTask(task);
+  const handleTaskClick = (task: TaskWithOwner) => setSelectedTask(task);
   const handleBack = () => setSelectedTask(null);
 
   const handleShare = (taskId: string) => {
     setActiveTaskId(taskId);
     setIsShareModalOpen(true);
-    tasksApi.share(taskId).catch(console.error);
+    recordShare(taskId);
   };
 
   const handleReport = (taskId: string) => {
@@ -120,40 +95,87 @@ const ExplorePage: React.FC = () => {
   };
 
   const handleReportSubmit = async (reason: string, details: string) => {
-    if (!activeTaskId) return;
     try {
-      await tasksApi.report(activeTaskId, { reason, details });
+      await submitReport({
+        reason: reason as "spam" | "inappropriate" | "scam" | "duplicate" | "other",
+        details,
+      });
       setIsReportModalOpen(false);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to submit report');
+      alert(err instanceof Error ? err.message : "Failed to submit report");
     }
   };
 
-  // ─── Task detail view ────────────────────────────────────────────────────
+  const handleEdit = (task: TaskWithOwner) => {
+    const params = new URLSearchParams({
+      editId:      task._id,
+      title:       task.title,
+      description: task.description,
+      category:    task.category ?? "errands",
+      budget:      task.price,
+      location:    task.location,
+      tags:        (task.tags ?? []).map((t) => t.replace(/^#/, "")).join(","),
+      duration:    "90_mins",
+    });
+    router.push(`/dashboard/create?${params.toString()}`);
+  };
+
+  const handleDeleteRequest = (taskId: string) => {
+    setTaskToDelete(taskId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!taskToDelete) return;
+    try {
+      await deleteTask(taskToDelete);
+      setIsDeleteModalOpen(false);
+      setTaskToDelete(null);
+      if (selectedTask?._id === taskToDelete) setSelectedTask(null);
+      refetch();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete task");
+    }
+  };
+
+  // ─── Task Detail view ─────────────────────────────────────────────────────
   if (selectedTask) {
+    const isOwner = selectedTask.createdBy === currentUserId;
     return (
       <DashboardLayout>
-        <TaskDetails task={selectedTask} onBack={handleBack} />
+        <TaskDetails
+          task={selectedTask}            // posterUserId is included in selectedTask
+          onBack={handleBack}
+          isOwner={isOwner}
+          onEdit={() => handleEdit(selectedTask)}
+          onDelete={() => handleDeleteRequest(selectedTask._id)}
+        />
+        <DeleteAdModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }}
+          onConfirm={handleDeleteConfirm}
+        />
       </DashboardLayout>
     );
   }
 
-  // ─── Main view ───────────────────────────────────────────────────────────
   return (
     <DashboardLayout>
       <div className="bg-inputBg p-6">
         <div className="max-w-6xl mx-auto">
           <ExploreHeader activeTasksCount={tasks.length} />
 
-          {loading && (
+          {isLoading && (
             <p className="text-center text-textGray py-12">Loading tasks...</p>
           )}
 
           {error && (
-            <p className="text-center text-red-500 py-12">{error}</p>
+            <p className="text-center text-red-500 py-12">
+              {error instanceof Error ? error.message : "Failed to load tasks"}
+            </p>
           )}
 
-          {!loading && !error && (
+          {!isLoading && !error && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <PinnedTaskCard />
 
@@ -166,9 +188,14 @@ const ExplorePage: React.FC = () => {
                   <TaskCard
                     key={task._id}
                     {...task}
+                    isOwner={task.createdBy === currentUserId}
+                    posterUserId={task.posterUserId}  // pass for Contact us
+                    taskId={task._id}                  // pass for chat context
                     onClick={() => handleTaskClick(task)}
                     onShare={() => handleShare(task._id)}
                     onReport={() => handleReport(task._id)}
+                    onEdit={() => handleEdit(task)}
+                    onDelete={() => handleDeleteRequest(task._id)}
                   />
                 ))
               )}
@@ -179,13 +206,19 @@ const ExplorePage: React.FC = () => {
         <ShareAdModal
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
-          onShare={(platform) => console.log('Shared on:', platform)}
+          onShare={(platform) => console.log("Shared on:", platform)}
         />
 
         <ReportAdModal
           isOpen={isReportModalOpen}
           onClose={() => setIsReportModalOpen(false)}
           onSubmit={handleReportSubmit}
+        />
+
+        <DeleteAdModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }}
+          onConfirm={handleDeleteConfirm}
         />
       </div>
     </DashboardLayout>

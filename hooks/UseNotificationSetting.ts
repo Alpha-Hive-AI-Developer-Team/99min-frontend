@@ -4,7 +4,7 @@ import {
   updateNotificationSettings,
   NotificationSettings,
   UpdateNotificationSettingsPayload,
-} from "@/services/settings.service";
+} from "@/utils/api/settings.api";
 
 export function useNotificationSettings() {
   const [settings, setSettings] = useState<NotificationSettings | null>(null);

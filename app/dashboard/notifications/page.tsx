@@ -54,7 +54,7 @@ const NotificationsPage: React.FC = () => {
             {/* Actions */}
             <div className="flex items-center gap-2 mt-1">
               <button
-                onClick={refresh}
+               onClick={() => refresh()} 
                 className="p-2 text-textGray hover:text-textBlack transition-colors"
                 aria-label="Refresh"
               >
@@ -62,7 +62,7 @@ const NotificationsPage: React.FC = () => {
               </button>
               {unreadCount > 0 && (
                 <button
-                  onClick={handleMarkAllAsRead}
+             onClick={() => handleMarkAllAsRead()}
                   className="flex items-center gap-1.5 text-sm text-orange font-semibold hover:opacity-80 transition-opacity"
                 >
                   <CheckCheck className="w-4 h-4" />
@@ -76,7 +76,7 @@ const NotificationsPage: React.FC = () => {
           {error && (
             <div className="mx-8 mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">
               {error}{" "}
-              <button onClick={refresh} className="underline font-semibold">
+              <button onClick={() => refresh()} className="underline font-semibold">
                 Retry
               </button>
             </div>
@@ -115,7 +115,7 @@ const NotificationsPage: React.FC = () => {
           {hasMore && (
             <div className="px-8 mt-4">
               <button
-                onClick={loadMore}
+            onClick={() => loadMore()}
                 disabled={loading}
                 className="w-full py-3 text-sm text-textGray font-semibold border border-lightGrey rounded-xl hover:bg-inputBg transition-colors disabled:opacity-50"
               >

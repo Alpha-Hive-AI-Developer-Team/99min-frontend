@@ -1,101 +1,56 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import MessageThreadCard, { MessageThread } from './MessageThreadCard';
-import ChatInterface from './ChatInterface';
+import React, { useState } from "react";
+import { Search } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import MessageThreadCard from "./MessageThreadCard";
+import ChatInterface from "./ChatInterface";
+import { useConversations } from "@/hooks/UseConversations";
+import { ApiConversation } from "@/utils/api/message.api";
 
 const MessagesPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [manualSelection, setManualSelection] = useState<ApiConversation | null>(null);
 
-  // Dummy data for message threads
-  const messageThreads: MessageThread[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      lastMessage: 'Great! I can be there in 15 minutes.',
-      timestamp: '17m ago',
-      unreadCount: 1,
-      isOnline: true,
-      initial: 'J',
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      lastMessage: 'I have experience with product photos. Can you share samples?',
-      timestamp: '34m ago',
-      unreadCount: 1,
-      isOnline: true,
-      initial: 'J',
-    },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      lastMessage: 'Thanks for your help today!',
-      timestamp: '1h ago',
-      unreadCount: undefined,
-      isOnline: false,
-      initial: 'M',
-    },
-    {
-      id: '4',
-      name: 'Emily Davis',
-      lastMessage: 'Got everything on your list.',
-      timestamp: '2h ago',
-      unreadCount: undefined,
-      isOnline: false,
-      initial: 'E',
-    },
-    {
-      id: '5',
-      name: 'Frank Johnson',
-      lastMessage: 'Just finished the project upc',
-      timestamp: '1h ago',
-      unreadCount: undefined,
-      isOnline: false,
-      initial: 'F',
-    },
-  ];
+  const searchParams = useSearchParams();
+  const { conversations, loading, error, refresh } = useConversations();
 
-  const filteredThreads = messageThreads.filter((thread) =>
-    thread.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    thread.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+  const urlConversationId = searchParams.get("conversationId");
+
+  // Derive selected conversation without useEffect:
+  // Manual click takes priority, then URL param
+  const selectedConversation: ApiConversation | null =
+    manualSelection ??
+    (urlConversationId
+      ? (conversations.find((c) => c._id === urlConversationId) ?? null)
+      : null);
+
+  const filteredConversations = conversations.filter(
+    (conv) =>
+      conv.otherParticipant.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      conv.lastMessage?.body.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleThreadClick = (thread: MessageThread) => {
-    setSelectedThread(thread);
-  };
-
-  const handleBackToMessages = () => {
-    setSelectedThread(null);
-  };
-
-  // Show chat interface if a thread is selected
-  if (selectedThread) {
+  if (selectedConversation) {
     return (
-      <div className="bg-inputBg">
-        <ChatInterface
-          contactName={selectedThread.name}
-          contactInitial={selectedThread.initial}
-          isOnline={selectedThread.isOnline || false}
-          onBack={handleBackToMessages}
-        />
-      </div>
+      <ChatInterface
+        conversation={selectedConversation}
+        onBack={() => setManualSelection(null)}
+      />
     );
   }
 
-  // Show messages list
   return (
     <div className="bg-inputBg min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
         <h1 className="text-3xl font-black text-textBlack mb-6">Messages</h1>
 
-        {/* Search Bar */}
+        {/* Search */}
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-textGray" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-textGray" />
             <input
               type="text"
               placeholder="Search conversations..."
@@ -106,26 +61,58 @@ const MessagesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Message Threads List */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          {filteredThreads.length > 0 ? (
-            filteredThreads.map((thread) => (
-              <MessageThreadCard
-                key={thread.id}
-                thread={thread}
-                onClick={() => handleThreadClick(thread)}
-              />
-            ))
-          ) : (
-            <div className="p-8 text-center text-textGray">
-              <p>No conversations found</p>
-            </div>
-          )}
-        </div>
+        {/* Error */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+            {error}{" "}
+            <button onClick={() => refresh()} className="underline font-semibold">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-4 border-b border-gray-100 last:border-b-0 animate-pulse"
+              >
+                <div className="w-12 h-12 rounded-full bg-gray-100 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-100 rounded w-1/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Thread list */}
+        {!loading && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {filteredConversations.length > 0 ? (
+              filteredConversations.map((conv) => (
+                <MessageThreadCard
+                  key={conv._id}
+                  conversation={conv}
+                  onClick={() => setManualSelection(conv)}
+                />
+              ))
+            ) : (
+              <div className="p-8 text-center text-textGray">
+                <p>No conversations yet</p>
+                <p className="text-sm mt-1">
+                  Click &quot;Contact us&quot; on any task to start a conversation
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default MessagesPage;
-

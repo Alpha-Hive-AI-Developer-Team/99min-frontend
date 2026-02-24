@@ -4,7 +4,7 @@ import {
   updateProfile,
   type Profile,
   type UpdateProfilePayload,
-} from "@/services/settings.service";
+} from "@/utils/api/settings.api";
 import { getAccessToken, silentRefresh } from "@/utils/api/client";
 
 export function useProfile() {

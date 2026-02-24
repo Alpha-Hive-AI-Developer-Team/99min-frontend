@@ -18,7 +18,6 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 
-// Exported so CreateTaskPage can use the same type
 export interface FormData {
   title: string;
   description: string;
@@ -31,11 +30,28 @@ export interface FormData {
 }
 
 interface CreateTaskFormProps {
-  // files are passed alongside form data so the page can upload them
   onSubmit?: (data: FormData, files: File[]) => Promise<void>;
+  /** Pass prefilled values when editing an existing task */
+  initialData?: Partial<FormData>;
+  /** When true, shows "Update Ad" label instead of "Post Ad" */
+  isEditMode?: boolean;
 }
 
-const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
+const defaultFormData: FormData = {
+  title: '',
+  description: '',
+  category: 'errands',
+  budget: '',
+  location: '',
+  tags: '',
+  duration: '90_mins',
+};
+
+const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
+  onSubmit,
+  initialData,
+  isEditMode = false,
+}) => {
   const router = useRouter();
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -52,7 +68,6 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
     const isVideo = selectedFiles[0].type.startsWith('video');
     const isImage = selectedFiles[0].type.startsWith('image');
 
-    // Prevent mixing image & video
     if (fileType && ((fileType === 'video' && isImage) || (fileType === 'image' && isVideo))) {
       setFileError(`You can only upload ${fileType === 'video' ? 'videos' : 'images'}.`);
       return;
@@ -77,15 +92,10 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
     if (files.length === 1) setFileType(null);
   };
 
-  // ─── Form state ────────────────────────────────────────────────────────────
+  // ─── Form state (merge defaults with any prefilled data) ───────────────────
   const [formData, setFormData] = useState<FormData>({
-    title: '',
-    description: '',
-    category: 'errands',
-    budget: '',
-    location: '',
-    tags: '',
-    duration: '90_mins',
+    ...defaultFormData,
+    ...initialData,
   });
 
   const handleChange = (field: keyof FormData, value: string) => {
@@ -102,14 +112,15 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
       return;
     }
 
-    if (files.length === 0) {
+    // In edit mode, media upload is optional (existing media is kept server-side)
+    if (!isEditMode && files.length === 0) {
       alert('Please upload at least one image or video.');
       return;
     }
 
     try {
       if (onSubmit) {
-        await onSubmit(formData, files); // ← passes files to parent
+        await onSubmit(formData, files);
       } else {
         await new Promise((resolve) => setTimeout(resolve, 500));
         console.log('Form submitted:', formData, files);
@@ -119,6 +130,12 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
       const msg = error instanceof Error ? error.message : 'Failed to post task. Please try again.';
       setSubmitError(msg);
     }
+  };
+
+  const resetForm = () => {
+    setFormData(defaultFormData);
+    setFiles([]);
+    setFileType(null);
   };
 
   return (
@@ -178,14 +195,10 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-bold text-gray-900 mb-1">
-            Task Duration
-          </label>
+          <label className="block text-sm font-bold text-gray-900 mb-1">Task Duration</label>
           <Select
             value={formData.duration}
-            onValueChange={(value) =>
-              handleChange('duration', value as FormData['duration'])
-            }
+            onValueChange={(value) => handleChange('duration', value as FormData['duration'])}
           >
             <SelectTrigger className="relative h-12 w-full pl-10 pr-4 rounded-xl mt-2 border border-gray-200 bg-gray-50 focus:ring-primary">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -201,10 +214,16 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
         </div>
       </div>
 
-      {/* ─── Upload Media ──────────────────────────────────────────────────── */}
+      {/* Upload Media */}
       <div className="mb-6">
         <label className="block text-sm font-bold text-gray-900 mb-2">
-          Upload Media <span className="text-red-500">*</span>
+          Upload Media{' '}
+          {!isEditMode && <span className="text-red-500">*</span>}
+          {isEditMode && (
+            <span className="text-gray-400 font-normal text-xs ml-1">
+              (leave empty to keep existing media)
+            </span>
+          )}
         </label>
 
         <label
@@ -243,22 +262,13 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
                   <button
                     type="button"
                     className="absolute top-1 right-1 bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-gray-300 z-10"
-                    onClick={() => {
-                      removeFile(index);
-                      URL.revokeObjectURL(url);
-                    }}
+                    onClick={() => { removeFile(index); URL.revokeObjectURL(url); }}
                   >
                     <X className="w-3 h-3" />
                   </button>
 
                   {file.type.startsWith('image') ? (
-                    <Image
-                      src={url}
-                      alt={file.name}
-                      fill
-                      
-                      className="object-cover"
-                    />
+                    <Image src={url} alt={file.name} fill className="object-cover" />
                   ) : (
                     <video
                       src={url}
@@ -291,39 +301,34 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit }) => {
         <p className="text-red-500 text-sm text-center mt-4">{submitError}</p>
       )}
 
-      {/* ─── Submit Button ─────────────────────────────────────────────────── */}
+      {/* Submit Button */}
       <div className="bg-white border-t border-gray-200 p-4 z-30">
         <div className="max-w-7xl mx-auto">
           <Button type="submit" variant="primary" size="lg" fullWidth>
-            Post Ad (Expires in{' '}
-            {formData.duration === '90_mins' ? '90 mins' : '24 hours'})
+            {isEditMode
+              ? 'Update Ad'
+              : `Post Ad (Expires in ${formData.duration === '90_mins' ? '90 mins' : '24 hours'})`}
           </Button>
         </div>
       </div>
 
-      {/* ─── Success Modal ─────────────────────────────────────────────────── */}
+      {/* Success Modal */}
       <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => {
           setIsSuccessModalOpen(false);
-          setFormData({
-            title: '',
-            description: '',
-            category: 'errands',
-            budget: '',
-            location: '',
-            tags: '',
-            duration: '90_mins',
-          });
-          setFiles([]);
-          setFileType(null);
+          if (!isEditMode) resetForm();
         }}
-        title="Ad Posted!"
+        title={isEditMode ? 'Ad Updated!' : 'Ad Posted!'}
         description={
-          <>
-            Your ad is live and will expire in{' '}
-            {formData.duration === '90_mins' ? '90 minutes' : '24 hours'}.
-          </>
+          isEditMode ? (
+            <>Your task has been updated successfully.</>
+          ) : (
+            <>
+              Your ad is live and will expire in{' '}
+              {formData.duration === '90_mins' ? '90 minutes' : '24 hours'}.
+            </>
+          )
         }
         buttonText="Got it"
         onButtonClick={() => router.push('/dashboard/explore')}

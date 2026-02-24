@@ -16,7 +16,7 @@ import HelpCenterPage from "@/components/settings/HelpCenterPage";
 import PaymentMethodsPage from "@/components/settings/PaymentMethodsPage";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { useProfile } from "@/hooks/UseProfile";
-import { UpdateProfilePayload } from "@/services/settings.service";
+import { UpdateProfilePayload } from "@/utils/api/settings.api";
 import { User, Bell, MapPin, CreditCard, Shield, HelpCircle, Lock } from "lucide-react";
 
 const SettingsPage: React.FC = () => {

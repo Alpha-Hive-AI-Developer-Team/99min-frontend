@@ -4,7 +4,7 @@ import {
   updatePrivacySettings,
   PrivacySettings,
   UpdatePrivacyPayload,
-} from "@/services/settings.service";
+} from "@/utils/api/settings.api";
 
 export function usePrivacySettings() {
   const [settings, setSettings] = useState<PrivacySettings | null>(null);

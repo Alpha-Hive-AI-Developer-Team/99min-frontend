@@ -6,7 +6,7 @@ import {
   deletePaymentMethod,
   PaymentMethod,
   AddPaymentMethodPayload,
-} from "@/services/settings.service";
+} from "@/utils/api/settings.api";
 
 export function usePaymentMethods() {
   const [methods, setMethods] = useState<PaymentMethod[]>([]);

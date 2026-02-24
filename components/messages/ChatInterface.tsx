@@ -1,118 +1,74 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Phone, Video, MoreVertical, Send } from 'lucide-react';
-import CallModal from './CallModal';
-import ChatMenu from './ChatMenu';
-import ReportUserModal from './ReportUserModal';
-
-export interface ChatMessage {
-  id: string;
-  text: string;
-  timestamp: string;
-  isSent: boolean; // true for outgoing, false for incoming
-}
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import {
+  ArrowLeft,
+  Phone,
+  Video,
+  MoreVertical,
+  Send,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ApiConversation, CURRENT_USER_ID } from "@/utils/api/message.api";
+import { useMessages } from "@/hooks/UseMessages";
+import CallModal from "./CallModal";
+import ChatMenu from "./ChatMenu";
+import ReportUserModal from "./ReportUserModal";
 
 interface ChatInterfaceProps {
-  contactName: string;
-  contactInitial: string;
-  isOnline: boolean;
+  conversation: ApiConversation;
   onBack: () => void;
-  messages?: ChatMessage[];
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
-  contactName,
-  contactInitial,
-  isOnline,
+  conversation,
   onBack,
-  messages: initialMessages = [],
 }) => {
-  // Default messages if none provided
-  const defaultMessages: ChatMessage[] = [
-    {
-      id: '1',
-      text: "Hi! I saw your dog walking request. I'm available right now!",
-      timestamp: '9:54 AM',
-      isSent: false,
-    },
-    {
-      id: '2',
-      text: 'Perfect! Are you experienced with large dogs?',
-      timestamp: '9:57 AM',
-      isSent: true,
-    },
-    {
-      id: '3',
-      text: 'Yes, I have a German Shepherd myself. Golden retrievers are wonderful!',
-      timestamp: '9:59 AM',
-      isSent: false,
-    },
-    {
-      id: '4',
-      text: 'Great! Can you meet at the park entrance?',
-      timestamp: '10:02 AM',
-      isSent: true,
-    },
-    {
-      id: '5',
-      text: 'Great! I can be there in 15 minutes.',
-      timestamp: '10:04 AM',
-      isSent: false,
-    },
-  ];
-
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    initialMessages.length > 0 ? initialMessages : defaultMessages
-  );
-  const [newMessage, setNewMessage] = useState('');
+  const [input, setInput] = useState("");
   const [isVideoCallModalOpen, setIsVideoCallModalOpen] = useState(false);
   const [isVoiceCallModalOpen, setIsVoiceCallModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isReportUserModalOpen, setIsReportUserModalOpen] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  const { messages, loading, error, hasMore, loadMore, sendMessage, sending, sendError } =
+    useMessages(conversation._id);
+
+  const { otherParticipant, isOnline } = conversation;
+
+  // Scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Close menu when clicking outside
+  // Close menu on outside click
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
       }
     };
-
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    if (isMenuOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newMessage.trim()) {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-      
-      const newMsg: ChatMessage = {
-        id: Date.now().toString(),
-        text: newMessage.trim(),
-        timestamp: timeString,
-        isSent: true,
-      };
-      
-      setMessages((prev) => [...prev, newMsg]);
-      setNewMessage('');
+  const handleSend = useCallback(() => {
+    const trimmed = input.trim();
+    if (!trimmed || sending) return;
+    sendMessage(trimmed);
+    setInput("");
+    inputRef.current?.focus();
+  }, [input, sending, sendMessage]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
@@ -126,41 +82,45 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         >
           <ArrowLeft className="w-5 h-5 text-textBlack" />
         </button>
-        
+
         {/* Avatar */}
         <div className="relative shrink-0">
           <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center">
-            <span className="text-white text-base font-bold">{contactInitial.toUpperCase()}</span>
+            <span className="text-white text-base font-bold">
+              {otherParticipant.initial.toUpperCase()}
+            </span>
           </div>
           {isOnline && (
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
           )}
         </div>
 
-        {/* Name and Status */}
+        {/* Name & Status */}
         <div className="flex-1 min-w-0">
-          <h2 className="text-textBlack font-bold text-base">{contactName}</h2>
-          <p className={`text-sm ${isOnline ? 'text-green-500' : 'text-textGray'}`}>
-            {isOnline ? 'Online' : 'Offline'}
+          <h2 className="text-textBlack font-bold text-base">
+            {otherParticipant.name}
+          </h2>
+          <p className={`text-sm ${isOnline ? "text-green-500" : "text-textGray"}`}>
+            {isOnline ? "Online" : "Offline"}
           </p>
         </div>
 
-        {/* Action Icons */}
+        {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          <button 
+          <button
             onClick={() => setIsVoiceCallModalOpen(true)}
             className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <Phone className="w-5 h-5 text-textGray" />
           </button>
-          <button 
+          <button
             onClick={() => setIsVideoCallModalOpen(true)}
             className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <Video className="w-5 h-5 text-textGray" />
           </button>
           <div className="relative" ref={menuRef}>
-            <button 
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
             >
@@ -173,19 +133,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   setIsMenuOpen(false);
                 }}
                 onMuteNotifications={() => {
-                  console.log('Mute notifications');
+                  console.log("Mute notifications");
                   setIsMenuOpen(false);
                 }}
                 onViewAdDetails={() => {
-                  console.log('View ad details');
+                  console.log("View ad details");
                   setIsMenuOpen(false);
                 }}
                 onBlockUser={() => {
-                  console.log('Block user');
+                  console.log("Block user");
                   setIsMenuOpen(false);
                 }}
                 onDeleteChat={() => {
-                  console.log('Delete chat');
+                  console.log("Delete chat");
                   setIsMenuOpen(false);
                 }}
               />
@@ -196,78 +156,153 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.isSent ? 'justify-end' : 'justify-start'}`}
-          >
-            <div className="max-w-[75%]">
-              <div
-                className={`rounded-2xl px-4 py-2.5 ${
-                  message.isSent
-                    ? 'bg-orange text-white'
-                    : 'bg-lightGrey text-textBlack'
-                }`}
-              >
-                <p className="text-sm leading-relaxed">{message.text}</p>
-              </div>
-              <p className="text-textGray text-xs mt-1 px-1">
-                {message.timestamp}
-              </p>
-            </div>
+        {/* Load earlier */}
+        {hasMore && (
+          <div className="text-center">
+            <button
+              onClick={() => loadMore()}
+              className="text-xs text-textGray underline"
+            >
+              Load earlier messages
+            </button>
           </div>
-        ))}
-        <div ref={messagesEndRef} />
+        )}
+
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"} animate-pulse`}
+              >
+                <div
+                  className={`h-10 rounded-2xl bg-gray-200 ${i % 2 === 0 ? "w-48" : "w-36"}`}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Fetch error */}
+        {error && (
+          <div className="flex items-center gap-2 text-red-500 text-sm p-3 bg-red-50 rounded-xl">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        {/* Message bubbles */}
+        {messages.map((msg) => {
+          const isMe = msg.senderId === CURRENT_USER_ID;
+          const isOptimistic = msg._id.startsWith("optimistic_");
+          const time = formatDistanceToNow(new Date(msg.createdAt), {
+            addSuffix: true,
+          });
+
+          return (
+            <div
+              key={msg._id}
+              className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+            >
+              <div className="max-w-[75%]">
+                <div
+                  className={`rounded-2xl px-4 py-2.5 transition-opacity ${
+                    isMe
+                      ? "bg-orange text-white"
+                      : "bg-lightGrey text-textBlack"
+                  } ${isOptimistic ? "opacity-60" : "opacity-100"}`}
+                >
+                  <p className="text-sm leading-relaxed">{msg.body}</p>
+                </div>
+                <p className="text-textGray text-xs mt-1 px-1">
+                  {isMe && isOptimistic ? "Sending..." : time}
+                  {isMe && !isOptimistic && msg.read && (
+                    <span className="ml-1 text-blue-400">✓✓</span>
+                  )}
+                  {isMe && !isOptimistic && !msg.read && (
+                    <span className="ml-1 text-textGray">✓</span>
+                  )}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Empty state */}
+        {!loading && messages.length === 0 && !error && (
+          <div className="text-center text-textGray text-sm py-8">
+            No messages yet. Say hello! 👋
+          </div>
+        )}
+
+        <div ref={bottomRef} />
       </div>
 
-      {/* Input Area - Fixed at bottom */}
+      {/* Send error banner */}
+      {sendError && (
+        <div className="px-4 py-2 bg-red-50 text-red-500 text-xs text-center shrink-0">
+          Failed to send message. Please try again.
+        </div>
+      )}
+
+      {/* Input Area */}
       <div className="bg-white border-t border-gray-200 px-4 py-3 shrink-0">
-        <form onSubmit={handleSend} className="flex items-center gap-3">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+        <div className="flex items-end gap-3">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2.5 bg-inputBg rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-orange transition-all text-textBlack placeholder:text-textGray"
+            rows={1}
+            className="flex-1 resize-none px-4 py-2.5 bg-inputBg rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-orange transition-all text-textBlack placeholder:text-textGray text-sm max-h-32 overflow-y-auto"
+            style={{ lineHeight: "1.5" }}
           />
           <button
-            type="submit"
-            disabled={!newMessage.trim()}
-            className="p-2.5 bg-orange text-white rounded-xl hover:bg-orangeHover transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed shrink-0"
+            onClick={handleSend}
+            disabled={!input.trim() || sending}
+            className="p-2.5 bg-orange text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 shrink-0"
           >
-            <Send className="w-5 h-5" />
+            {sending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
           </button>
-        </form>
+        </div>
+        <p className="text-xs text-textGray mt-1.5 pl-1">
+          Press Enter to send · Shift+Enter for new line
+        </p>
       </div>
 
       {/* Call Modals */}
       <CallModal
         isOpen={isVideoCallModalOpen}
         onClose={() => setIsVideoCallModalOpen(false)}
-        contactName={contactName}
-        contactInitial={contactInitial}
+        contactName={otherParticipant.name}
+        contactInitial={otherParticipant.initial}
         callType="video"
       />
       <CallModal
         isOpen={isVoiceCallModalOpen}
         onClose={() => setIsVoiceCallModalOpen(false)}
-        contactName={contactName}
-        contactInitial={contactInitial}
+        contactName={otherParticipant.name}
+        contactInitial={otherParticipant.initial}
         callType="voice"
       />
 
-      {/* Report User Modal */}
+      {/* Report Modal */}
       <ReportUserModal
         isOpen={isReportUserModalOpen}
         onClose={() => setIsReportUserModalOpen(false)}
         onSubmit={(reason, details) => {
-          console.log('Report user:', { reason, details });
+          console.log("Report user:", { reason, details });
         }}
-        userName={contactName}
+        userName={otherParticipant.name}
       />
     </div>
   );
 };
 
 export default ChatInterface;
-

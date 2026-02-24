@@ -7,8 +7,8 @@ import TaskDetailsMenu from './TaskDetailsMenu';
 
 interface TaskDetailsHeaderProps {
   onBack: () => void;
-  onReport: () => void;
-  onShare: () => void;
+  onReport?: () => void;
+  onShare?: () => void;
 }
 
 const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({ onBack, onReport, onShare }) => {
@@ -26,15 +26,15 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({ onBack, onReport,
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleReport = () => {
-    onReport();
-    setIsMenuOpen(false);
-  };
+ const handleReport = () => {
+  onReport?.();   
+  setIsMenuOpen(false);
+};
 
-  const handleShare = () => {
-    onShare();
-    setIsMenuOpen(false);
-  };
+const handleShare = () => {
+  onShare?.();   
+  setIsMenuOpen(false);
+};
 
   return (
     <PageHeader

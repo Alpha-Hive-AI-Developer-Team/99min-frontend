@@ -4,7 +4,7 @@ import {
   unblockUser,
   blockUser,
   BlockedUser,
-} from "@/services/settings.service";
+} from "@/utils/api/settings.api";
 
 export function useBlockedUsers() {
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);

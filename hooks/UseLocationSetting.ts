@@ -4,7 +4,7 @@ import {
   updateLocationSettings,
   LocationSettings,
   UpdateLocationPayload,
-} from "@/services/settings.service";
+} from "@/utils/api/settings.api";
 
 export function useLocationSettings() {
   const [settings, setSettings] = useState<LocationSettings | null>(null);
