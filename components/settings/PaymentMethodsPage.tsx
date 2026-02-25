@@ -37,7 +37,7 @@ const PaymentMethodsPage: React.FC<PaymentMethodsPageProps> = ({ onBack }) => {
 
   const handleDeleteConfirm = async () => {
     if (selectedMethodId) {
-      await handleDelete(selectedMethodId);
+       handleDelete(selectedMethodId); 
       setSelectedMethodId(null);
       setIsRemoveModalOpen(false);
     }

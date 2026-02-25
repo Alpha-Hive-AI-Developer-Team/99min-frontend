@@ -126,7 +126,36 @@ export async function updateProfile(
 ): Promise<{ success: boolean; message: string; data: Profile }> {
   return request("/api/profile", { method: "PATCH", body: JSON.stringify(payload) });
 }
+export async function uploadAvatar(
+  file: File
+): Promise<{ success: boolean; data: Profile }> {
+  const formData = new FormData();
+  formData.append("avatar", file);
 
+  // Can't use request() helper here since it sets Content-Type to application/json
+  const { getAccessToken } = await import("@/utils/api/client");
+  const token = getAccessToken();
+  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  const response = await fetch(`${BACKEND_URL}/api/profile/avatar`, {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    credentials: "include",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body?.message ?? `Upload failed (${response.status})`);
+  }
+
+  return response.json();
+}
+export async function deleteAvatar(): Promise<{ success: boolean; data: Profile }> {
+  return request("/api/profile/avatar", { method: "DELETE" });
+}
 // ─── Location Settings ────────────────────────────────────────────────────────
 
 export async function getLocationSettings(): Promise<{ success: boolean; data: LocationSettings }> {

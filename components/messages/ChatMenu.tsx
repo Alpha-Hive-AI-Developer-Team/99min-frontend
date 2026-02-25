@@ -1,9 +1,11 @@
 "use client";
 
 import React from 'react';
-import { BellOff, Flag, UserX, Trash2 } from 'lucide-react';
+import { Bell, BellOff, ExternalLink, Flag, UserX, Trash2 } from 'lucide-react';
 
 interface ChatMenuProps {
+  isMuted: boolean;
+  hasTask: boolean;
   onMuteNotifications?: () => void;
   onViewAdDetails?: () => void;
   onBlockUser?: () => void;
@@ -12,6 +14,8 @@ interface ChatMenuProps {
 }
 
 const ChatMenu: React.FC<ChatMenuProps> = ({
+  isMuted,
+  hasTask,
   onMuteNotifications,
   onViewAdDetails,
   onBlockUser,
@@ -20,43 +24,30 @@ const ChatMenu: React.FC<ChatMenuProps> = ({
 }) => {
   return (
     <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg py-2 min-w-[200px] z-50 border border-gray-100">
-      <button 
-        onClick={onMuteNotifications}
-        className="w-full flex items-center gap-3 text-left px-4 py-3 text-textBlack hover:bg-gray-50 transition-colors"
-      >
-        <BellOff className="w-5 h-5 text-textGray" />
-        <span className="font-medium">Mute Notifications</span>
+      <button onClick={onMuteNotifications} className="w-full flex items-center gap-3 text-left px-4 py-3 text-textBlack hover:bg-gray-50 transition-colors">
+        {isMuted ? <Bell className="w-5 h-5 text-textGray" /> : <BellOff className="w-5 h-5 text-textGray" />}
+        <span className="font-medium">{isMuted ? "Unmute Notifications" : "Mute Notifications"}</span>
       </button>
-      
-      <button 
-        onClick={onViewAdDetails}
-        className="w-full flex items-center gap-3 text-left px-4 py-3 text-textBlack hover:bg-gray-50 transition-colors border-t border-gray-100"
-      >
+
+      {hasTask && (
+        <button onClick={onViewAdDetails} className="w-full flex items-center gap-3 text-left px-4 py-3 text-textBlack hover:bg-gray-50 transition-colors border-t border-gray-100">
+          <ExternalLink className="w-5 h-5 text-textGray" />
+          <span className="font-medium">View Ad Details</span>
+        </button>
+      )}
+
+      <button onClick={onReportUser} className="w-full flex items-center gap-3 text-left px-4 py-3 text-textBlack hover:bg-gray-50 transition-colors border-t border-gray-100">
         <Flag className="w-5 h-5 text-textGray" />
-        <span className="font-medium">View Ad Details</span>
-      </button>
-      
-      <button 
-        onClick={onBlockUser}
-        className="w-full flex items-center gap-3 text-left px-4 py-3 text-red hover:bg-gray-50 transition-colors border-t border-gray-100"
-      >
-        <UserX className="w-5 h-5 text-red" />
-        <span className="font-medium">Block User</span>
-      </button>
-      
-      <button 
-        onClick={onReportUser}
-        className="w-full flex items-center gap-3 text-left px-4 py-3 text-red hover:bg-gray-50 transition-colors"
-      >
-        <Flag className="w-5 h-5 text-red" />
         <span className="font-medium">Report User</span>
       </button>
-      
-      <button 
-        onClick={onDeleteChat}
-        className="w-full flex items-center gap-3 text-left px-4 py-3 text-red hover:bg-gray-50 transition-colors border-t border-gray-100"
-      >
-        <Trash2 className="w-5 h-5 text-red" />
+
+      <button onClick={onBlockUser} className="w-full flex items-center gap-3 text-left px-4 py-3 text-red-500 hover:bg-red-50 transition-colors border-t border-gray-100">
+        <UserX className="w-5 h-5 text-red-500" />
+        <span className="font-medium">Block User</span>
+      </button>
+
+      <button onClick={onDeleteChat} className="w-full flex items-center gap-3 text-left px-4 py-3 text-red-500 hover:bg-red-50 transition-colors border-t border-gray-100">
+        <Trash2 className="w-5 h-5 text-red-500" />
         <span className="font-medium">Delete Chat</span>
       </button>
     </div>
@@ -64,4 +55,3 @@ const ChatMenu: React.FC<ChatMenuProps> = ({
 };
 
 export default ChatMenu;
-

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useRef } from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SettingsSection from "./SettingsSection";
 import LocationToggleCard from "./LocationToggleCard";
@@ -16,8 +16,19 @@ interface LocationPageProps {
 
 const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
   const { settings, loading, error, handleUpdate } = useLocationSettings();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const quickSelectOptions = [5, 10, 25, 50];
+
+  const handleRadiusChange = useCallback(
+    (val: number) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        handleUpdate({ defaultRadius: val });
+      }, 400);
+    },
+    [handleUpdate]
+  );
 
   if (loading) {
     return (
@@ -40,8 +51,6 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
         {error && (
           <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>
         )}
-
-        {/* REMOVED: saving banner — updates are optimistic, no banner needed */}
 
         <div>
           <LocationToggleCard
@@ -69,7 +78,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
               min={1}
               max={50}
               value={settings?.defaultRadius ?? 10}
-              onChange={(val) => handleUpdate({ defaultRadius: val })}
+              onChange={handleRadiusChange}
               label="Distance"
               minLabel="1 mi"
               maxLabel="50 mi"

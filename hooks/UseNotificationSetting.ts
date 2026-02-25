@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getNotificationSettings,
   updateNotificationSettings,
@@ -6,48 +7,73 @@ import {
   UpdateNotificationSettingsPayload,
 } from "@/utils/api/settings.api";
 
+export const notificationSettingsQueryKey = ["notificationSettings"];
+
 export function useNotificationSettings() {
-  const [settings, setSettings] = useState<NotificationSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchSettings = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await getNotificationSettings();
-      setSettings(res.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load notification settings");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: settings = null,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: notificationSettingsQueryKey,
+    queryFn: () => getNotificationSettings().then((res) => res.data),
+    retry: false,
+  });
 
-  useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+  const error = queryError instanceof Error
+    ? queryError.message
+    : queryError
+    ? "Failed to load notification settings"
+    : null;
 
-  const handleToggle = useCallback(
-    async (key: keyof NotificationSettings, value: boolean) => {
-      // Optimistic update
-      setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
-      try {
-        setSaving(true);
-        const payload: UpdateNotificationSettingsPayload = { [key]: value };
-        const res = await updateNotificationSettings(payload);
-        setSettings(res.data);
-      } catch (err) {
-        // Revert on failure
-        setSettings((prev) => (prev ? { ...prev, [key]: !value } : prev));
-        setError(err instanceof Error ? err.message : "Failed to update settings");
-      } finally {
-        setSaving(false);
+  const { mutate, error: mutationError } = useMutation({
+    mutationFn: (payload: UpdateNotificationSettingsPayload) =>
+      updateNotificationSettings(payload).then((res) => res.data),
+
+    // Optimistic update
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: notificationSettingsQueryKey });
+      const previous = queryClient.getQueryData<NotificationSettings>(notificationSettingsQueryKey);
+      queryClient.setQueryData<NotificationSettings>(
+        notificationSettingsQueryKey,
+        (old) => old ? { ...old, ...payload } : old
+      );
+      return { previous };
+    },
+
+    // Roll back on failure
+    onError: (_err, _payload, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(notificationSettingsQueryKey, context.previous);
       }
     },
-    []
+
+    // Always sync with server truth after settle
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: notificationSettingsQueryKey });
+    },
+  });
+
+  const handleToggle = useCallback(
+    (key: keyof NotificationSettings, value: boolean) => {
+      mutate({ [key]: value });
+    },
+    [mutate]
   );
 
-  return { settings, loading, saving, error, handleToggle };
+  const toggleError = mutationError instanceof Error
+    ? mutationError.message
+    : mutationError
+    ? "Failed to update settings"
+    : null;
+
+  return {
+    settings,
+    loading,
+    saving: false, // optimistic — no spinner needed
+    error: error ?? toggleError,
+    handleToggle,
+  };
 }

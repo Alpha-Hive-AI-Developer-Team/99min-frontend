@@ -2,13 +2,16 @@
 
 import React, { useState } from "react";
 import { Search } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import MessageThreadCard from "./MessageThreadCard";
 import ChatInterface from "./ChatInterface";
 import { useConversations } from "@/hooks/UseConversations";
 import { ApiConversation } from "@/utils/api/message.api";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 const MessagesPage: React.FC = () => {
+   const router = useRouter();
+  const pathname = usePathname();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [manualSelection, setManualSelection] = useState<ApiConversation | null>(null);
 
@@ -32,13 +35,19 @@ const MessagesPage: React.FC = () => {
         .includes(searchQuery.toLowerCase()) ||
       conv.lastMessage?.body.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
+const handleBack = () => {
+    setManualSelection(null);
+    // Also clear the URL param if it exists
+    if (urlConversationId) {
+      router.replace(pathname); // removes ?conversationId= from URL
+    }
+  };
   if (selectedConversation) {
     return (
       <ChatInterface
-        conversation={selectedConversation}
-        onBack={() => setManualSelection(null)}
-      />
+      conversation={selectedConversation}
+      onBack={handleBack} 
+    />
     );
   }
 

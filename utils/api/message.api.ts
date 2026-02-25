@@ -4,7 +4,6 @@ import { request } from "@/utils/api/client";
 // TYPES
 // ============================================================
 
-export const CURRENT_USER_ID = "me";
 
 export interface ApiMessage {
   _id: string;
@@ -30,6 +29,7 @@ export interface ApiConversation {
   unreadCount: number;
   isOnline: boolean;
   updatedAt: string;
+   taskId?: string | null; 
 }
 
 export interface GetConversationsResponse {
@@ -109,4 +109,7 @@ export async function markConversationRead(
     `/api/messages/conversations/${conversationId}/read`,
     { method: "PATCH" }
   );
+}
+export async function deleteConversation(conversationId: string): Promise<{ success: boolean }> {
+  return request(`/api/messages/conversations/${conversationId}`, { method: "DELETE" });
 }

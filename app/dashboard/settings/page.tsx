@@ -16,7 +16,7 @@ import HelpCenterPage from "@/components/settings/HelpCenterPage";
 import PaymentMethodsPage from "@/components/settings/PaymentMethodsPage";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { useProfile } from "@/hooks/UseProfile";
-import { UpdateProfilePayload } from "@/utils/api/settings.api";
+
 import { User, Bell, MapPin, CreditCard, Shield, HelpCircle, Lock } from "lucide-react";
 
 const SettingsPage: React.FC = () => {
@@ -35,14 +35,14 @@ const SettingsPage: React.FC = () => {
     router.push("/auth/login");
   };
 
-  const handleProfileSubmit = (data: UpdateProfilePayload) => {
-    setShowProfile(false);
-  };
+ const handleProfileSubmit = () => {
+  setShowProfile(false);
+};
 
   if (showProfile) {
     return (
       <DashboardLayout>
-        <ProfilePage onBack={() => setShowProfile(false)} onSubmit={handleProfileSubmit} />
+      <ProfilePage onBack={() => setShowProfile(false)} onSubmit={handleProfileSubmit} />
       </DashboardLayout>
     );
   }

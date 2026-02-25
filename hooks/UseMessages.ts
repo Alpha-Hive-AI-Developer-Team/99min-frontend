@@ -10,9 +10,9 @@ import {
   markConversationRead,
   GetMessagesResponse,
   ApiMessage,
-  CURRENT_USER_ID,
 } from "@/utils/api/message.api";
 import { useSocket } from "./UseSocket";
+import { useAuth } from "@/store/auth-context";
 
 type MessageCache = {
   pages: GetMessagesResponse[];
@@ -22,7 +22,8 @@ type MessageCache = {
 export function useMessages(conversationId: string | null) {
   const queryClient = useQueryClient();
   const socket = useSocket();
-
+const { user } = useAuth(); // ← add this
+  const currentUserId = user?._id;
   const { data, isLoading, isError, error, hasNextPage, fetchNextPage } =
     useInfiniteQuery<GetMessagesResponse>({
       queryKey: ["messages", conversationId],
@@ -78,7 +79,7 @@ export function useMessages(conversationId: string | null) {
           const updatedPages = old.pages.map((page) => ({
             ...page,
             data: page.data.map((m) =>
-              m.senderId === CURRENT_USER_ID
+               m.senderId === currentUserId 
                 ? { ...m, read: true, readAt: new Date().toISOString() }
                 : m
             ),
@@ -95,11 +96,12 @@ export function useMessages(conversationId: string | null) {
       socket.off("message:new", handleNewMessage);
       socket.off("message:read", handleMessageRead);
     };
-  }, [socket, conversationId, queryClient]);
+  }, [socket, conversationId, queryClient, currentUserId]);
 
   // Send with optimistic update
   const sendMutation = useMutation({
     mutationFn: (body: string) => sendMessage(conversationId!, body),
+    
     onMutate: async (body) => {
       await queryClient.cancelQueries({
         queryKey: ["messages", conversationId],
@@ -108,7 +110,7 @@ export function useMessages(conversationId: string | null) {
       const optimisticMsg: ApiMessage = {
         _id: `optimistic_${Date.now()}`,
         conversationId: conversationId!,
-        senderId: CURRENT_USER_ID,
+       senderId: currentUserId!,
         senderName: "Me",
         senderInitial: "M",
         body,
@@ -174,6 +176,9 @@ export function useMessages(conversationId: string | null) {
     loadMore: fetchNextPage,
     sendMessage: sendMutation.mutate,
     sending: sendMutation.isPending,
-    sendError: sendMutation.isError,
+   sendError: sendMutation.isError,
+  sendErrorMessage: sendMutation.error instanceof Error 
+    ? sendMutation.error.message 
+    : null,
   };
 }

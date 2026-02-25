@@ -1,26 +1,22 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/shared/PageHeader";
 import ProfileAvatar from "./ProfileAvatar";
 import ProfileForm from "./ProfileForm";
 import { useProfile } from "@/hooks/UseProfile";
-import { UpdateProfilePayload } from "@/services/settings.service";
+import { profileQueryKey } from "@/hooks/UseProfile";
+import { UpdateProfilePayload, uploadAvatar, deleteAvatar  } from "@/utils/api/settings.api";
 
 interface ProfilePageProps {
   onBack?: () => void;
   onSubmit?: (data: UpdateProfilePayload) => void;
 }
 
-/**
- * Safely converts a dob value (Date object, ISO string, or undefined) to a
- * yyyy-MM-dd string suitable for an <input type="date" />.
- */
 function formatDobForInput(dob: string | Date | undefined | null): string {
   if (!dob) return "";
-  // FIX: dob could be a JS Date from the API, not just an ISO string.
-  // Calling .split("T") on a Date object would throw.
   const date = new Date(dob);
   if (isNaN(date.getTime())) return "";
   return date.toISOString().split("T")[0];
@@ -28,13 +24,53 @@ function formatDobForInput(dob: string | Date | undefined | null): string {
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onSubmit }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { profile, loading, saving, error, handleUpdateProfile } = useProfile();
+
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   const handleBack = () => {
     if (onBack) onBack();
     else router.back();
   };
 
+  const handleImageChange = async (file: File) => {
+    // Show instant local preview
+    const previewUrl = URL.createObjectURL(file);
+    setLocalAvatarUrl(previewUrl);
+    setAvatarError(null);
+
+    try {
+      setAvatarUploading(true);
+      await uploadAvatar(file);
+      await queryClient.invalidateQueries({ queryKey: profileQueryKey });
+      URL.revokeObjectURL(previewUrl);
+      setLocalAvatarUrl(null); // now use real Cloudinary URL from refreshed cache
+    } catch (err) {
+      setLocalAvatarUrl(null);
+      setAvatarError(
+        err instanceof Error ? err.message : "Failed to upload avatar"
+      );
+      URL.revokeObjectURL(previewUrl);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+const handleDeleteAvatar = async () => {
+  try {
+    setAvatarUploading(true);
+    setAvatarError(null);
+    await deleteAvatar();
+    await queryClient.invalidateQueries({ queryKey: profileQueryKey });
+    setLocalAvatarUrl(null);
+  } catch (err) {
+    setAvatarError(err instanceof Error ? err.message : "Failed to remove avatar");
+  } finally {
+    setAvatarUploading(false);
+  }
+};
   const handleSubmit = async (data: UpdateProfilePayload) => {
     const success = await handleUpdateProfile(data);
     if (success && onSubmit) onSubmit(data);
@@ -59,14 +95,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onSubmit }) => {
       <PageHeader title="Profile" onBack={handleBack} maxWidth="7xl" />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>
+        {(error || avatarError) && (
+          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">
+            {error || avatarError}
+          </div>
         )}
 
         <ProfileAvatar
           initial={profile?.name?.[0]?.toUpperCase() ?? "?"}
-          imageUrl={profile?.avatar}
-          onImageChange={() => console.log("Change image")}
+          imageUrl={localAvatarUrl ?? profile?.avatar}
+          onImageChange={handleImageChange}
+          uploading={avatarUploading}
+           onImageDelete={handleDeleteAvatar}
         />
 
         <ProfileForm
@@ -75,7 +115,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onSubmit }) => {
             username: profile?.username ?? "",
             bio: profile?.bio ?? "",
             phone: profile?.phone ?? "",
-            // FIX: safely handle dob whether it's a Date object or an ISO string
             dob: formatDobForInput(profile?.dob),
           }}
           saving={saving}

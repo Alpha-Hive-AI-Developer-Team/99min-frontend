@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getLocationSettings,
   updateLocationSettings,
@@ -6,47 +7,65 @@ import {
   UpdateLocationPayload,
 } from "@/utils/api/settings.api";
 
+export const locationSettingsQueryKey = ["locationSettings"];
+
 export function useLocationSettings() {
-  const [settings, setSettings] = useState<LocationSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchSettings = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await getLocationSettings();
-      setSettings(res.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load location settings");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: settings = null,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: locationSettingsQueryKey,
+    queryFn: () => getLocationSettings().then((res) => res.data),
+    retry: false,
+  });
 
-  useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+  const { mutate, error: mutationError } = useMutation({
+    mutationFn: (payload: UpdateLocationPayload) =>
+      updateLocationSettings(payload).then((res) => res.data),
 
-  const handleUpdate = useCallback(async (payload: UpdateLocationPayload): Promise<boolean> => {
-    // Optimistic update for booleans/numbers
-    setSettings((prev) => (prev ? { ...prev, ...payload } : prev));
-    try {
-      setSaving(true);
-      setError(null);
-      const res = await updateLocationSettings(payload);
-      setSettings(res.data);
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update location settings");
-      // Revert
-      fetchSettings();
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [fetchSettings]);
+    // Optimistic update
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: locationSettingsQueryKey });
+      const previous = queryClient.getQueryData<LocationSettings>(locationSettingsQueryKey);
+      queryClient.setQueryData<LocationSettings>(
+        locationSettingsQueryKey,
+        (old) => (old ? { ...old, ...payload } : old)
+      );
+      return { previous };
+    },
 
-  return { settings, loading, saving, error, handleUpdate };
+    // Revert on failure
+    onError: (_err, _payload, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(locationSettingsQueryKey, context.previous);
+      }
+    },
+
+    // Sync with server after settle
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: locationSettingsQueryKey });
+    },
+  });
+
+  const handleUpdate = useCallback(
+    (payload: UpdateLocationPayload) => {
+      mutate(payload);
+    },
+    [mutate]
+  );
+
+  const error =
+    (queryError instanceof Error ? queryError.message : queryError ? "Failed to load location settings" : null) ??
+    (mutationError instanceof Error ? mutationError.message : mutationError ? "Failed to update location settings" : null);
+
+  return {
+    settings,
+    loading,
+    saving: false,
+    error,
+    handleUpdate,
+  };
 }

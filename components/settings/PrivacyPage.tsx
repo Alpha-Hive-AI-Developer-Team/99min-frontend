@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 import PageHeader from "@/components/shared/PageHeader";
 import SettingsSection from "./SettingsSection";
 import RadioButton from "./RadioButton";
@@ -23,7 +24,6 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handleDownloadData = async () => {
@@ -38,18 +38,14 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    try {
-      setIsDeleting(true);
-      setActionError(null);
-      await deleteMyAccount();
-      router.push("/auth/login");
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to delete account");
-      setIsDeleting(false);
-    }
-  };
+    const { mutate: deleteAccount, isPending: isDeleting } = useMutation({
+    mutationFn: deleteMyAccount,
+    onSuccess: () => router.push("/auth/login"),
+    onError: (err) =>
+      setActionError(err instanceof Error ? err.message : "Failed to delete account"),
+  });
 
+  const handleDeleteAccount = () => deleteAccount();
   if (loading) {
     return (
       <div className="bg-white min-h-screen">

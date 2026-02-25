@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getProfile,
   updateProfile,
@@ -7,59 +8,52 @@ import {
 } from "@/utils/api/settings.api";
 import { getAccessToken, silentRefresh } from "@/utils/api/client";
 
-export function useProfile() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const profileQueryKey = ["profile"];
 
-  const fetchProfile = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // FIX: accessToken is stored in-memory and starts as null on page load.
-      // If it's missing, run a silent refresh first so the Authorization header
-      // is present when the profile request fires. Without this, the backend
-      // receives an unauthenticated request and mergeWithUser never runs.
-      if (!getAccessToken()) {
-        const refreshed = await silentRefresh();
-        if (!refreshed) {
-          setError("Session expired. Please log in again.");
-          setLoading(false);
-          return;
-        }
-      }
-
-      const res = await getProfile();
-      setProfile(res.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load profile");
-    } finally {
-      setLoading(false);
+async function fetchProfileWithAuth(): Promise<Profile> {
+  if (!getAccessToken()) {
+    const refreshed = await silentRefresh();
+    if (!refreshed) {
+      throw new Error("Session expired. Please log in again.");
     }
-  }, []);
+  }
+  const res = await getProfile();
+  return res.data;
+}
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+export function useProfile() {
+  const queryClient = useQueryClient();
+
+  const {
+    data: profile = null,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: profileQueryKey,
+    queryFn: fetchProfileWithAuth,
+    retry: false,
+  });
+
+  const error = queryError instanceof Error ? queryError.message : queryError ? "Failed to load profile" : null;
+
+  const { mutateAsync, isPending: saving } = useMutation({
+    mutationFn: (payload: UpdateProfilePayload) =>
+      updateProfile(payload).then((res) => res.data),
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(profileQueryKey, updatedProfile);
+    },
+  });
 
   const handleUpdateProfile = useCallback(
     async (payload: UpdateProfilePayload): Promise<boolean> => {
       try {
-        setSaving(true);
-        setError(null);
-        const res = await updateProfile(payload);
-        setProfile(res.data);
+        await mutateAsync(payload);
         return true;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to update profile");
+      } catch {
         return false;
-      } finally {
-        setSaving(false);
       }
     },
-    []
+    [mutateAsync]
   );
 
   return {
@@ -68,6 +62,6 @@ export function useProfile() {
     saving,
     error,
     handleUpdateProfile,
-    refetch: fetchProfile,
+    refetch: () => queryClient.invalidateQueries({ queryKey: profileQueryKey }),
   };
 }
