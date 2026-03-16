@@ -1,5 +1,4 @@
-// src/validators/auth.schemas.ts
-// Single source of truth for all auth form validation rules
+
 
 import { z } from "zod";
 

@@ -4,8 +4,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/store/auth-context";
-import { authApi } from "@/utils/api";
-
+import { authApi } from "@/utils/api/auth.api";
+import { setAccessToken } from "@/utils/api";
 interface AuthGuardProps {
   children: React.ReactNode;
 }
@@ -23,14 +23,15 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
     // Try silent restore via httpOnly refresh-token cookie
     authApi
-      .refresh()
-      .then((res) => {
-        setAuth(res.data.user, res.data.accessToken);
-        setChecking(false);
-      })
-      .catch(() => {
-        router.replace("/auth/login");
-      });
+  .refresh()
+  .then((res) => {
+    setAccessToken(res.data.accessToken);          // ← add this line
+    setAuth(res.data.user, res.data.accessToken);
+    setChecking(false);
+  })
+  .catch(() => {
+    router.replace("/auth/login");
+  });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (checking) {

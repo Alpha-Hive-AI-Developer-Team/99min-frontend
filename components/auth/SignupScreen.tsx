@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@/components/ui";
 import { AuthPageLayout, AuthHeader, AuthFormFooter } from "./shared";
 import OtpModal from "@/components/auth/OtpModal";
-import { authApi } from "@/utils/api";
+import { authApi } from "@/utils/api/auth.api";
 import { signupSchema, SignupFormData } from "@/validators/auth-schema";
 
 type SignupStep = "form" | "otp";

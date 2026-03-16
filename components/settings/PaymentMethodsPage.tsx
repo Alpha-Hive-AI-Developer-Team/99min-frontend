@@ -1,153 +1,136 @@
 "use client";
 
-import React, { useState } from 'react';
-import PageHeader from '@/components/shared/PageHeader';
-import AddPaymentMethodCard from './AddPaymentMethodCard';
-import PaymentMethodCard from './PaymentMethodCard';
-import AddPaymentMethodModal from './AddPaymentMethodModal';
-import RemovePaymentMethodModal from './RemovePaymentMethodModal';
-
-interface PaymentMethod {
-  id: string;
-  cardType: 'visa' | 'mastercard' | 'amex' | 'discover';
-  last4: string;
-  expiryMonth: string;
-  expiryYear: string;
-  isDefault: boolean;
-}
+import React, { useState } from "react";
+import PageHeader from "@/components/shared/PageHeader";
+import AddPaymentMethodCard from "./AddPaymentMethodCard";
+import PaymentMethodCard from "./PaymentMethodCard";
+import AddPaymentMethodModal from "./AddPaymentMethodModal";
+import RemovePaymentMethodModal from "./RemovePaymentMethodModal";
+import { usePaymentMethods } from "@/hooks/UsePaymentMethod";
 
 interface PaymentMethodsPageProps {
   onBack?: () => void;
 }
 
+type CardBrand = "visa" | "mastercard" | "amex" | "discover";
+const VALID_BRANDS = new Set<CardBrand>(["visa", "mastercard", "amex", "discover"]);
+
+function toCardBrand(brand?: string): CardBrand {
+  if (brand && VALID_BRANDS.has(brand as CardBrand)) return brand as CardBrand;
+  return "visa";
+}
+
 const PaymentMethodsPage: React.FC<PaymentMethodsPageProps> = ({ onBack }) => {
+  const { methods, loading, error, handleAdd, handleSetDefault, handleDelete } =
+    usePaymentMethods();
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
-  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | null>(null);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    {
-      id: '1',
-      cardType: 'visa',
-      last4: '4242',
-      expiryMonth: '12',
-      expiryYear: '25',
-      isDefault: true,
-    },
-    {
-      id: '2',
-      cardType: 'mastercard',
-      last4: '5555',
-      expiryMonth: '12',
-      expiryYear: '25',
-      isDefault: false,
-    },
-  ]);
-
-  const handleSetDefault = (id: string) => {
-    setPaymentMethods((prev) =>
-      prev.map((method) => ({
-        ...method,
-        isDefault: method.id === id,
-      }))
-    );
-  };
+  const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
 
   const handleDeleteClick = (id: string) => {
-    setSelectedPaymentMethodId(id);
+    setSelectedMethodId(id);
     setIsRemoveModalOpen(true);
   };
 
   const handleDeleteConfirm = () => {
-    if (selectedPaymentMethodId) {
-      setPaymentMethods((prev) => {
-        const updated = prev.filter((method) => method.id !== selectedPaymentMethodId);
-        // If we deleted the default, set the first one as default
-        if (updated.length > 0 && prev.find((m) => m.id === selectedPaymentMethodId)?.isDefault) {
-          updated[0].isDefault = true;
-        }
-        return updated;
-      });
-      setSelectedPaymentMethodId(null);
+    if (selectedMethodId) {
+      handleDelete(selectedMethodId);
+      setSelectedMethodId(null);
+      setIsRemoveModalOpen(false);
     }
   };
 
-  const handleAddPaymentMethod = () => {
-    setIsAddModalOpen(true);
+  const detectBrand = (cardNumber: string): CardBrand => {
+    if (cardNumber.startsWith("4")) return "visa";
+    if (cardNumber.startsWith("5")) return "mastercard";
+    if (cardNumber.startsWith("3")) return "amex";
+    return "discover";
   };
 
-  const handleSubmitCard = (cardData: {
+  const handleSubmitCard = async (cardData: {
     cardNumber: string;
     expiryDate: string;
     cvv: string;
     cardholderName: string;
   }) => {
-    // Extract card type (simplified - in real app, use card number to detect)
-    const cardType = cardData.cardNumber.startsWith('4') ? 'visa' : 
-                     cardData.cardNumber.startsWith('5') ? 'mastercard' :
-                     cardData.cardNumber.startsWith('3') ? 'amex' : 'discover';
-    
-    // Extract last 4 digits
-    const last4 = cardData.cardNumber.slice(-4);
-    
-    // Parse expiry date (MM/YY format)
-    const [expiryMonth, expiryYear] = cardData.expiryDate.split('/');
-    
-    // Add new payment method
-    const newMethod: PaymentMethod = {
-      id: Date.now().toString(),
-      cardType,
-      last4,
-      expiryMonth,
-      expiryYear,
-      isDefault: paymentMethods.length === 0, // First card is default
-    };
-    
-    setPaymentMethods((prev) => [...prev, newMethod]);
-    setIsAddModalOpen(false);
-    
-    console.log('Card added:', cardData);
+    const [expMonthStr, expYearStr] = cardData.expiryDate.split("/");
+    const brand = detectBrand(cardData.cardNumber);
+
+    // FIX: Modal gives 2-digit year (e.g. "34") but backend validator requires
+    // full 4-digit year >= current year. Convert "34" → 2034.
+    const expMonth = Number(expMonthStr);
+    const expYearRaw = Number(expYearStr);
+    const expYear = expYearRaw < 100
+      ? 2000 + expYearRaw   // 34 → 2034
+      : expYearRaw;
+
+    const success = await handleAdd({
+      stripePaymentMethodId: `pm_stub_${Date.now()}`,
+      type: "card",
+      brand,
+      last4: cardData.cardNumber.slice(-4),
+      expMonth,
+      expYear,
+      isDefault: methods.length === 0,
+    });
+
+    if (success) setIsAddModalOpen(false);
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white min-h-screen">
+        <PageHeader title="Payment Methods" onBack={onBack} maxWidth="7xl" />
+        <div className="max-w-7xl mx-auto px-4 py-8 space-y-3">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
       <PageHeader title="Payment Methods" onBack={onBack} maxWidth="7xl" />
-      
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-4">
-        {/* Add Payment Method Card */}
-        <AddPaymentMethodCard onClick={handleAddPaymentMethod} />
 
-        {/* Payment Methods List */}
-        {paymentMethods.length > 0 && (
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-4">
+        {error && (
+          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>
+        )}
+
+        <AddPaymentMethodCard onClick={() => setIsAddModalOpen(true)} />
+
+        {methods.length > 0 && (
           <div className="space-y-3">
-            {paymentMethods.map((method) => (
+            {methods.map((method) => (
               <PaymentMethodCard
-                key={method.id}
-                cardType={method.cardType}
-                last4={method.last4}
-                expiryMonth={method.expiryMonth}
-                expiryYear={method.expiryYear}
+                key={method._id}
+                cardType={toCardBrand(method.brand)}
+                last4={method.last4 ?? "****"}
+                expiryMonth={String(method.expMonth ?? "").padStart(2, "0")}
+                expiryYear={String(method.expYear ?? "").slice(-2)}
                 isDefault={method.isDefault}
-                onSetDefault={() => handleSetDefault(method.id)}
-                onDelete={() => handleDeleteClick(method.id)}
+                onSetDefault={() => handleSetDefault(method._id)}
+                onDelete={() => handleDeleteClick(method._id)}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Add Payment Method Modal */}
       <AddPaymentMethodModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleSubmitCard}
       />
 
-      {/* Remove Payment Method Modal */}
       <RemovePaymentMethodModal
         isOpen={isRemoveModalOpen}
         onClose={() => {
           setIsRemoveModalOpen(false);
-          setSelectedPaymentMethodId(null);
+          setSelectedMethodId(null);
         }}
         onConfirm={handleDeleteConfirm}
       />
@@ -156,4 +139,3 @@ const PaymentMethodsPage: React.FC<PaymentMethodsPageProps> = ({ onBack }) => {
 };
 
 export default PaymentMethodsPage;
-

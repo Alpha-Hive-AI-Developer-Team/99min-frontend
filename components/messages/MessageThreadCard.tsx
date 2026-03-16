@@ -1,27 +1,24 @@
 "use client";
 
-import React from 'react';
-
-export interface MessageThread {
-  id: string;
-  name: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount?: number;
-  isOnline?: boolean;
-  initial: string;
-}
+import React from "react";
+import { formatDistanceToNow } from "date-fns";
+import { ApiConversation } from "@/utils/api/message.api";
 
 interface MessageThreadCardProps {
-  thread: MessageThread;
+  conversation: ApiConversation;
   onClick?: () => void;
 }
 
 const MessageThreadCard: React.FC<MessageThreadCardProps> = ({
-  thread,
+  conversation,
   onClick,
 }) => {
-  const { name, lastMessage, timestamp, unreadCount, isOnline, initial } = thread;
+  const { otherParticipant, lastMessage, unreadCount, isOnline } = conversation;
+  const hasUnread = unreadCount > 0;
+
+  const timestamp = lastMessage?.createdAt
+    ? formatDistanceToNow(new Date(lastMessage.createdAt), { addSuffix: true })
+    : "";
 
   return (
     <button
@@ -31,32 +28,48 @@ const MessageThreadCard: React.FC<MessageThreadCardProps> = ({
       {/* Avatar */}
       <div className="relative shrink-0">
         <div className="w-12 h-12 bg-orange rounded-full flex items-center justify-center">
-          <span className="text-white text-lg font-bold">{initial.toUpperCase()}</span>
+          <span className="text-white text-lg font-bold">
+            {otherParticipant.initial.toUpperCase()}
+          </span>
         </div>
-        {/* Online Status Indicator */}
         {isOnline && (
-          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
         )}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between mb-1">
-          <h3 className="text-textBlack font-bold text-base">{name}</h3>
+          <h3
+            className={`text-base ${
+              hasUnread
+                ? "font-bold text-textBlack"
+                : "font-semibold text-textBlack"
+            }`}
+          >
+            {otherParticipant.name}
+          </h3>
           <div className="flex items-center gap-2 shrink-0 ml-2">
             <span className="text-textGray text-xs">{timestamp}</span>
-            {unreadCount && unreadCount > 0 && (
+            {hasUnread && (
               <div className="w-5 h-5 bg-orange rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{unreadCount}</span>
+                <span className="text-white text-xs font-bold">
+                  {unreadCount}
+                </span>
               </div>
             )}
           </div>
         </div>
-        <p className="text-textGray text-sm line-clamp-2">{lastMessage}</p>
+        <p
+          className={`text-sm line-clamp-2 ${
+            hasUnread ? "text-textBlack font-medium" : "text-textGray"
+          }`}
+        >
+          {lastMessage?.body ?? "No messages yet"}
+        </p>
       </div>
     </button>
   );
 };
 
 export default MessageThreadCard;
-

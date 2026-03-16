@@ -1,134 +1,111 @@
 "use client";
 
-import React, { useState } from 'react';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import { Button } from '@/components/ui';
-import { Check, Save } from 'lucide-react';
-import SuccessModal from '@/components/shared/SuccessModal';
-
-interface ProfileFormData {
-  fullName: string;
-  email: string;
-  phone: string;
-  location: string;
-  bio: string;
-}
+import React from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui";
+import { UpdateProfilePayload } from "@/services/settings.service";
 
 interface ProfileFormProps {
-  initialData?: Partial<ProfileFormData>;
-  onSubmit?: (data: ProfileFormData) => void;
+  defaultValues: {
+    name: string;
+    username: string;
+    bio: string;
+    phone: string;
+    dob: string;
+  };
+  saving: boolean;
+  onSubmit: (data: UpdateProfilePayload) => void;
 }
 
-const ProfileForm: React.FC<ProfileFormProps> = ({
-  initialData = {},
-  onSubmit,
-}) => {
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [formData, setFormData] = useState<ProfileFormData>({
-    fullName: initialData.fullName || 'John Doe',
-    email: initialData.email || 'john.doe@example.com',
-    phone: initialData.phone || '+1 (555) 123-4567',
-    location: initialData.location || 'New York, NY',
-    bio: initialData.bio || '',
-  });
+const ProfileForm: React.FC<ProfileFormProps> = ({ defaultValues, saving, onSubmit }) => {
+  const { register, handleSubmit, formState: { errors } } = useForm({ defaultValues });
 
-  const handleChange = (field: keyof ProfileFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleFormSubmit = (raw: typeof defaultValues) => {
+    // FIX: strip empty strings before sending to the backend.
+    // The validator uses isMobilePhone / isISO8601 which both reject "" as invalid.
+    // Only include a field if the user actually entered a value.
+    const payload: UpdateProfilePayload = {};
+    if (raw.name.trim())     payload.name     = raw.name.trim();
+    if (raw.username.trim()) payload.username  = raw.username.trim();
+    if (raw.bio.trim())      payload.bio       = raw.bio.trim();
+    if (raw.phone.trim())    payload.phone     = raw.phone.trim();
+    if (raw.dob)             payload.dob       = raw.dob;
+
+    onSubmit(payload);
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Show success modal
-    setIsSuccessModalOpen(true);
-    
-    // Log the update (actual submission happens when modal is closed if onSubmit is provided)
-    console.log('Profile updated:', formData);
-  };
-
-  const bioCharacterCount = formData.bio.length;
-  const maxBioLength = 200;
 
   return (
-    <form onSubmit={handleSubmit} className="pb-32">
-      <Input
-        label="Full Name"
-        value={formData.fullName}
-        onChange={(e) => handleChange('fullName', e.target.value)}
-        required
-      />
-
-      <Input
-        label="Email"
-        type="email"
-        value={formData.email}
-        onChange={(e) => handleChange('email', e.target.value)}
-        required
-      />
-
-      <Input
-        label="Phone"
-        type="tel"
-        value={formData.phone}
-        onChange={(e) => handleChange('phone', e.target.value)}
-        required
-      />
-
-      <Input
-        label="Location"
-        value={formData.location}
-        onChange={(e) => handleChange('location', e.target.value)}
-        required
-      />
-
-      <div className="mb-4">
-        <Textarea
-          label="Bio"
-          value={formData.bio}
-          onChange={(e) => handleChange('bio', e.target.value)}
-          className="min-h-[120px]"
-          maxLength={maxBioLength}
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 mt-6">
+      {/* Full Name */}
+      <div>
+        <label className="block text-sm font-medium text-textBlack mb-1">Full Name</label>
+        <input
+          {...register("name")}
+          type="text"
+          placeholder="Enter your full name"
+          className="w-full px-4 py-3 rounded-xl bg-inputBg border border-transparent focus:border-orange focus:outline-none text-textBlack"
         />
-        <div className="text-right mt-1">
-          <span className="text-textGray text-xs">
-            {bioCharacterCount}/{maxBioLength} characters
-          </span>
-        </div>
+        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message as string}</p>}
       </div>
 
-      {/* Save Button - Fixed at bottom */}
-      <div className=" bg-white border-t border-gray-200 p-4 z-30">
-        <div className="max-w-7xl mx-auto">
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            className="flex items-center justify-center gap-2"
-          >
-            <Save className="w-5 h-5" />
-            Save Changes
-          </Button>
-        </div>
+      {/* Username */}
+      <div>
+        <label className="block text-sm font-medium text-textBlack mb-1">Username</label>
+        <input
+          {...register("username")}
+          type="text"
+          placeholder="e.g. john_doe"
+          className="w-full px-4 py-3 rounded-xl bg-inputBg border border-transparent focus:border-orange focus:outline-none text-textBlack"
+        />
+        {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username.message as string}</p>}
       </div>
 
-      <SuccessModal
-        isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
-        title="Profile Updated"
-        description={
-          <>
-            Your profile has been updated successfully.
-          </>
-        }
-        buttonText="Got it"
-        onButtonClick={() => setIsSuccessModalOpen(false)}
-        icon={<Check className="w-10 h-10" strokeWidth={3} />}
-      />
+      {/* Bio */}
+      <div>
+        <label className="block text-sm font-medium text-textBlack mb-1">Bio</label>
+        <textarea
+          {...register("bio")}
+          rows={3}
+          placeholder="Tell us about yourself"
+          className="w-full px-4 py-3 rounded-xl bg-inputBg border border-transparent focus:border-orange focus:outline-none text-textBlack resize-none"
+        />
+        {errors.bio && <p className="text-red-500 text-xs mt-1">{errors.bio.message as string}</p>}
+      </div>
+
+      {/* Phone */}
+      <div>
+        <label className="block text-sm font-medium text-textBlack mb-1">Phone</label>
+        <input
+          {...register("phone")}
+          type="tel"
+          placeholder="+1 234 567 8900"
+          className="w-full px-4 py-3 rounded-xl bg-inputBg border border-transparent focus:border-orange focus:outline-none text-textBlack"
+        />
+        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message as string}</p>}
+      </div>
+
+      {/* Date of Birth */}
+      <div>
+        <label className="block text-sm font-medium text-textBlack mb-1">Date of Birth</label>
+        <input
+          {...register("dob")}
+          type="date"
+          className="w-full px-4 py-3 rounded-xl bg-inputBg border border-transparent focus:border-orange focus:outline-none text-textBlack"
+        />
+        {errors.dob && <p className="text-red-500 text-xs mt-1">{errors.dob.message as string}</p>}
+      </div>
+
+      <Button
+        type="submit"
+        variant="primary"
+        size="md"
+        fullWidth
+        disabled={saving}
+      >
+        {saving ? "Saving…" : "Save Changes"}
+      </Button>
     </form>
   );
 };
 
 export default ProfileForm;
-

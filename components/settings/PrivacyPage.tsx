@@ -1,40 +1,76 @@
 "use client";
 
-import React, { useState } from 'react';
-import PageHeader from '@/components/shared/PageHeader';
-import SettingsSection from './SettingsSection';
-import RadioButton from './RadioButton';
-import NotificationToggle from './NotificationToggle';
-import BlockedUsersSection from './BlockedUsersSection';
-import { Button } from '@/components/ui';
-import { Trash2 } from 'lucide-react';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import PageHeader from "@/components/shared/PageHeader";
+import SettingsSection from "./SettingsSection";
+import RadioButton from "./RadioButton";
+import NotificationToggle from "./NotificationToggle";
+import BlockedUsersSection from "./BlockedUsersSection";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import { Button } from "@/components/ui";
+import { usePrivacySettings } from "@/hooks/UsePrivacySetting";
+import { deleteMyAccount } from "@/utils/api/account-action.api";
+import { downloadMyData } from "@/utils/api/account-action.api";
 
 interface PrivacyPageProps {
   onBack?: () => void;
 }
 
 const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
-  const [profileVisibility, setProfileVisibility] = useState<'public' | 'private' | 'hidden'>('public');
-  const [showLocation, setShowLocation] = useState(true);
-  const [showPhoneNumber, setShowPhoneNumber] = useState(false);
-  const [whoCanMessage, setWhoCanMessage] = useState<'everyone' | 'responders' | 'noone'>('everyone');
+  const router = useRouter();
+  const { settings, loading, error, handleUpdate } = usePrivacySettings();
 
-  const handleDownloadData = () => {
-    console.log('Downloading data...');
-    // Handle data download
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const handleDownloadData = async () => {
+    try {
+      setIsDownloading(true);
+      setActionError(null);
+      await downloadMyData(); // handles blob + anchor click internally
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to download data");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
-  const handleDeleteAccount = () => {
-    console.log('Delete account clicked');
-    // Handle account deletion (should open a confirmation modal)
-  };
+    const { mutate: deleteAccount, isPending: isDeleting } = useMutation({
+    mutationFn: deleteMyAccount,
+    onSuccess: () => router.push("/auth/login"),
+    onError: (err) =>
+      setActionError(err instanceof Error ? err.message : "Failed to delete account"),
+  });
+
+  const handleDeleteAccount = () => deleteAccount();
+  if (loading) {
+    return (
+      <div className="bg-white min-h-screen">
+        <PageHeader title="Privacy & Safety" onBack={onBack} maxWidth="7xl" />
+        <div className="max-w-7xl mx-auto px-4 py-8 space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
       <PageHeader title="Privacy & Safety" onBack={onBack} maxWidth="7xl" />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        {/* Profile Visibility Section */}
+        {(error || actionError) && (
+          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">
+            {error || actionError}
+          </div>
+        )}
+
+        {/* Profile Visibility */}
         <SettingsSection title="PROFILE VISIBILITY">
           <div className="px-4 py-2">
             <RadioButton
@@ -42,101 +78,111 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
               value="public"
               label="Public"
               description="Anyone can see your profile"
-              checked={profileVisibility === 'public'}
-              onChange={() => setProfileVisibility('public')}
+              checked={settings?.profileVisibility === "public"}
+              onChange={() => handleUpdate({ profileVisibility: "public" })}
             />
             <RadioButton
               name="profileVisibility"
               value="private"
               label="Private"
               description="Only people you chat with"
-              checked={profileVisibility === 'private'}
-              onChange={() => setProfileVisibility('private')}
+              checked={settings?.profileVisibility === "private"}
+              onChange={() => handleUpdate({ profileVisibility: "private" })}
             />
             <RadioButton
               name="profileVisibility"
-              value="hidden"
-              label="Hidden"
-              description="Completely anonymous"
-              checked={profileVisibility === 'hidden'}
-              onChange={() => setProfileVisibility('hidden')}
+              value="friends"
+              label="Friends Only"
+              description="Completely restricted"
+              checked={settings?.profileVisibility === "friends"}
+              onChange={() => handleUpdate({ profileVisibility: "friends" })}
             />
           </div>
         </SettingsSection>
 
-        {/* Information Sharing Section */}
+        {/* Information Sharing */}
         <SettingsSection title="INFORMATION SHARING">
           <div className="px-4">
             <NotificationToggle
               label="Show Location"
               description="Display city/region on ads"
-              enabled={showLocation}
-              onChange={setShowLocation}
+              enabled={settings?.showLocation ?? true}
+              onChange={(val) => handleUpdate({ showLocation: val })}
             />
             <NotificationToggle
               label="Show Phone Number"
               description="Share with responders"
-              enabled={showPhoneNumber}
-              onChange={setShowPhoneNumber}
+              enabled={settings?.showPhone ?? false}
+              onChange={(val) => handleUpdate({ showPhone: val })}
+            />
+            <NotificationToggle
+              label="Show Email"
+              description="Visible on your profile"
+              enabled={settings?.showEmail ?? false}
+              onChange={(val) => handleUpdate({ showEmail: val })}
             />
           </div>
         </SettingsSection>
 
-        {/* Who Can Message You Section */}
+        {/* Who Can Message */}
         <SettingsSection title="WHO CAN MESSAGE YOU">
           <div className="px-4 py-2">
             <RadioButton
               name="whoCanMessage"
-              value="everyone"
+              value="true"
               label="Everyone"
-              checked={whoCanMessage === 'everyone'}
-              onChange={() => setWhoCanMessage('everyone')}
+              checked={settings?.allowMessages === true}
+              onChange={() => handleUpdate({ allowMessages: true })}
             />
             <RadioButton
               name="whoCanMessage"
-              value="responders"
-              label="Only Task Responders"
-              checked={whoCanMessage === 'responders'}
-              onChange={() => setWhoCanMessage('responders')}
-            />
-            <RadioButton
-              name="whoCanMessage"
-              value="noone"
+              value="false"
               label="No One"
-              checked={whoCanMessage === 'noone'}
-              onChange={() => setWhoCanMessage('noone')}
+              checked={settings?.allowMessages === false}
+              onChange={() => handleUpdate({ allowMessages: false })}
             />
           </div>
         </SettingsSection>
 
-        {/* Blocked Users Section */}
         <BlockedUsersSection />
 
-        {/* Data & Privacy Section */}
+        {/* Data & Privacy */}
         <SettingsSection title="DATA & PRIVACY">
           <div className="px-4 py-4 space-y-4">
             <button
               onClick={handleDownloadData}
-              className="w-full px-4 bg-inputBg  py-4 rounded-xl text-left text-textBlack font-medium hover:text-orange transition-colors"
+              disabled={isDownloading}
+              className="w-full px-4 bg-inputBg py-4 rounded-xl text-left text-textBlack font-medium hover:text-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Download My Data
+              {isDownloading ? "Preparing download…" : "Download My Data"}
             </button>
             <Button
               variant="secondary"
               size="md"
               fullWidth
-              onClick={handleDeleteAccount}
-              className="bg-lightRed text-red text-start  hover:bg-red-50 border-0"
+              onClick={() => setIsDeleteModalOpen(true)}
+              disabled={isDeleting}
+              className="bg-lightRed text-red text-start hover:bg-red-50 border-0 disabled:opacity-50"
             >
-
-              <span className="text-red">      Delete My Account</span>
+              <span className="text-red">
+                {isDeleting ? "Deleting…" : "Delete My Account"}
+              </span>
             </Button>
           </div>
         </SettingsSection>
       </div>
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        description="This is permanent and cannot be undone. All your data, tasks, and history will be removed immediately."
+        confirmText="Delete My Account"
+        cancelText="Cancel"
+      />
     </div>
   );
 };
 
 export default PrivacyPage;
-
