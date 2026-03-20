@@ -12,8 +12,7 @@ import OtpModal from "@/components/auth/OtpModal";
 import { authApi } from "@/utils/api/auth.api";
 import { signupSchema, SignupFormData } from "@/validators/auth-schema";
 import { useI18n } from "@/contexts/i18n-context";
-
-type SignupStep = "form" | "otp";
+import en from "@/messages/en.json";
 
 interface ToastState {
   message: string;
@@ -23,7 +22,6 @@ interface ToastState {
 const SignupScreen: React.FC = () => {
   const { tr } = useI18n();
   const router = useRouter();
-  const t = useTranslations();
   const [step, setStep] = useState<"form" | "otp">("form");
   const [email, setEmailState] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -31,11 +29,10 @@ const SignupScreen: React.FC = () => {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting, isValid },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-    mode: "onChange", // validate as user types
+    mode: "onChange",
   });
 
   const showToast = (message: string, type: ToastState["type"] = "error") => {
@@ -60,7 +57,7 @@ const SignupScreen: React.FC = () => {
       } else if (message.includes("required") || message.includes("All fields")) {
         showToast("Please fill in all required fields.", "error");
       } else {
-        showToast(message || t("auth.signupFailed"), "error");
+        showToast(message || tr(en.auth.signupFailed), "error");
       }
     }
   };
@@ -84,7 +81,13 @@ const SignupScreen: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <AuthHeader title={t("auth.createAccount")} subtitle={t("auth.joinSubtitle")} ticketSize="sm" titleSize="2xl" className="mb-6" />
+      <AuthHeader
+        title={tr(en.auth.createAccount)}
+        subtitle={tr(en.auth.joinSubtitle)}
+        ticketSize="sm"
+        titleSize="2xl"
+        className="mb-6"
+      />
       <form className="w-full space-y-4" onSubmit={handleSubmit(onSubmit)}>
 
         {/* Name */}
@@ -92,8 +95,8 @@ const SignupScreen: React.FC = () => {
           <Input
             type="text"
             id="name"
-            label="Name"
-            placeholder="Your name"
+            label={tr(en.auth.name)}
+            placeholder={tr(en.auth.namePlaceholder)}
             {...register("name")}
           />
           {errors.name && (
@@ -106,8 +109,8 @@ const SignupScreen: React.FC = () => {
           <Input
             type="email"
             id="email"
-            label="Email"
-            placeholder="your@email.com"
+            label={tr(en.auth.email)}
+            placeholder={tr(en.auth.emailPlaceholder)}
             {...register("email")}
           />
           {errors.email && (
@@ -120,8 +123,8 @@ const SignupScreen: React.FC = () => {
           <Input
             type="password"
             id="password"
-            label="Password"
-            placeholder="Create a password (min 6 chars)"
+            label={tr(en.auth.password)}
+            placeholder={tr(en.auth.createPasswordPlaceholder)}
             showPasswordToggle
             {...register("password")}
           />
@@ -135,8 +138,8 @@ const SignupScreen: React.FC = () => {
           <Input
             type="password"
             id="confirm-password"
-            label="Confirm Password"
-            placeholder="Confirm your password"
+            label={tr(en.auth.confirmPassword)}
+            placeholder={tr(en.auth.confirmPasswordPlaceholder)}
             showPasswordToggle
             {...register("confirmPassword")}
           />
@@ -144,6 +147,7 @@ const SignupScreen: React.FC = () => {
             <p className="text-red-500 text-xs mt-1">{tr(String(errors.confirmPassword.message))}</p>
           )}
         </div>
+
         <div className="pt-4">
           <Button
             type="submit"
@@ -152,12 +156,21 @@ const SignupScreen: React.FC = () => {
             fullWidth
             disabled={!isValid || isSubmitting}
           >
-            {isSubmitting ? tr("Creating Account...") : tr("Create Account")}
+            {isSubmitting ? tr(en.auth.creatingAccount) : tr(en.auth.createAccount)}
           </Button>
         </div>
-        <AuthFormFooter question={t("auth.alreadyHaveAccount")} linkText={t("auth.login")} linkHref="/auth/login" className="mt-4" />
+
+        <AuthFormFooter
+          question={tr(en.auth.alreadyHaveAccount)}
+          linkText={tr(en.auth.login)}
+          linkHref="/auth/login"
+          className="mt-4"
+        />
+
         <div className="pt-8 pb-4">
-          <p className="text-center text-textGray text-xs px-4 leading-relaxed opacity-80">{t("auth.termsNotice")}</p>
+          <p className="text-center text-textGray text-xs px-4 leading-relaxed opacity-80">
+            {tr(en.auth.termsNotice)}
+          </p>
         </div>
       </form>
     </AuthPageLayout>

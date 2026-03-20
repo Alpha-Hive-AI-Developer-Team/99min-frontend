@@ -7,13 +7,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@/components/ui";
-import { Toast } from "@/components/ui/Toast"; // 👈 add this
+import { Toast } from "@/components/ui/Toast";
 import { AuthPageLayout, AuthHeader, AuthFormFooter } from "./shared";
 import { authApi } from "@/utils/api/auth.api";
 import { useAuth } from "@/store/auth-context";
 import { setAccessToken } from "@/utils/api";
 import { loginSchema, LoginFormData } from "@/validators/auth-schema";
 import { useI18n } from "@/contexts/i18n-context";
+import en from "@/messages/en.json";
 
 interface ToastState {
   message: string;
@@ -24,7 +25,6 @@ const LoginScreen: React.FC = () => {
   const { tr } = useI18n();
   const router = useRouter();
   const { setAuth } = useAuth();
-  const t = useTranslations();
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const {
@@ -37,7 +37,7 @@ const LoginScreen: React.FC = () => {
   });
 
   const showToast = (message: string, type: ToastState["type"] = "error") => {
-    setToast(null); // reset first so re-triggering animates fresh
+    setToast(null);
     setTimeout(() => setToast({ message, type }), 10);
   };
 
@@ -51,22 +51,21 @@ const LoginScreen: React.FC = () => {
       const message = err instanceof Error ? err.message : "";
 
       if (message.includes("No account found")) {
-        showToast("No account found with this email. Please sign up.", "error");
+        showToast(tr(en.auth.accountNotFound), "error");
       } else if (message.includes("not verified")) {
         showToast("Please verify your email first. Check your inbox for the OTP.", "warning");
       } else if (message.includes("Google") || message.includes("Facebook")) {
         showToast(message, "warning");
       } else if (message.includes("Invalid email or password")) {
-        showToast("Incorrect password. Please try again.", "error");
+        showToast(tr(en.auth.invalidCredentials), "error");
       } else {
-        showToast(message || "Login failed. Please try again.", "error");
+        showToast(message || tr(en.auth.loginFailed), "error");
       }
     }
   };
 
   return (
     <AuthPageLayout backButtonHref="/" contentMaxWidth="sm" contentClassName="justify-center">
-      {/* Toast renders outside the form flow, top-right */}
       {toast && (
         <Toast
           message={toast.message}
@@ -76,7 +75,7 @@ const LoginScreen: React.FC = () => {
         />
       )}
 
-      <AuthHeader title={t("auth.welcomeBack")} subtitle={t("auth.loginToContinue")} />
+      <AuthHeader title={tr(en.auth.welcomeBack)} subtitle={tr(en.auth.loginToContinue)} />
       <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
 
         {/* Email */}
@@ -84,8 +83,8 @@ const LoginScreen: React.FC = () => {
           <Input
             type="email"
             id="email"
-            label="Email"
-            placeholder="your@email.com"
+            label={tr(en.auth.email)}
+            placeholder={tr(en.auth.emailPlaceholder)}
             {...register("email")}
           />
           {errors.email && (
@@ -98,8 +97,8 @@ const LoginScreen: React.FC = () => {
           <Input
             type="password"
             id="password"
-            label="Password"
-            placeholder="Enter your password"
+            label={tr(en.auth.password)}
+            placeholder={tr(en.auth.passwordPlaceholder)}
             showPasswordToggle
             {...register("password")}
           />
@@ -110,16 +109,17 @@ const LoginScreen: React.FC = () => {
 
         <div className="flex justify-end mb-6">
           <Link href="/auth/forgot-password">
-            <Button type="button" variant="link" size="sm">{t("auth.forgotPassword")}</Button>
+            <Button type="button" variant="link" size="sm">{tr(en.auth.forgotPassword)}</Button>
           </Link>
         </div>
+
         <Button type="submit" variant="primary" size="lg" fullWidth disabled={!isValid || isSubmitting}>
-          {isSubmitting ? t("auth.loggingIn") : t("auth.loginSubmit")}
+          {isSubmitting ? tr(en.auth.loggingIn) : tr(en.auth.loginSubmit)}
         </Button>
 
         <AuthFormFooter
-          question="No account?"
-          linkText="Sign Up"
+          question={tr(en.auth.noAccount)}
+          linkText={tr(en.auth.signup)}
           linkHref="/auth/signup"
           className="mt-6"
         />
@@ -129,4 +129,3 @@ const LoginScreen: React.FC = () => {
 };
 
 export default LoginScreen;
-
