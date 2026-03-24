@@ -10,6 +10,8 @@ import { AuthPageLayout, AuthHeader, AuthFormFooter } from "./shared";
 import { Toast } from "@/components/ui/Toast";
 import OtpModal from "@/components/auth/OtpModal";
 import { authApi } from "@/utils/api/auth.api";
+import { setAccessToken } from "@/utils/api";
+import { useAuth } from "@/store/auth-context";
 import { signupSchema, SignupFormData } from "@/validators/auth-schema";
 import { useI18n } from "@/contexts/i18n-context";
 import en from "@/messages/en.json";
@@ -22,6 +24,7 @@ interface ToastState {
 const SignupScreen: React.FC = () => {
   const { tr } = useI18n();
   const router = useRouter();
+  const { setAuth } = useAuth();
   const [step, setStep] = useState<"form" | "otp">("form");
   const [email, setEmailState] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -47,9 +50,26 @@ const SignupScreen: React.FC = () => {
       setStep("otp");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "";
+      const normalized = message.toLowerCase();
 
-      if (message.includes("already exists") || message.includes("already registered")) {
-        showToast("An account with this email already exists. Please log in.", "warning");
+      if (normalized.includes("already exists") || normalized.includes("already registered")) {
+        // Existing-but-unverified account should continue in OTP flow.
+        try {
+          await authApi.resendSignupOtp({ email: data.email });
+          setEmailState(data.email);
+          setStep("otp");
+        } catch (resendErr: unknown) {
+          const resendMessage = resendErr instanceof Error ? resendErr.message : "";
+          const resendNormalized = resendMessage.toLowerCase();
+
+          if (resendNormalized.includes("already verified")) {
+            showToast("This account is already verified. Please log in.", "warning");
+          } else if (resendMessage) {
+            showToast(resendMessage, "warning");
+          } else {
+            showToast("An account with this email already exists. Please log in.", "warning");
+          }
+        }
       } else if (message.includes("valid email") || message.includes("invalid email")) {
         showToast("Please enter a valid email address.", "error");
       } else if (message.includes("6 characters") || message.includes("too short")) {
@@ -66,7 +86,15 @@ const SignupScreen: React.FC = () => {
     <OtpModal
       email={email}
       onBack={() => setStep("form")}
-      onVerify={() => router.push("/auth/login")}
+      onVerify={(result) => {
+        if (result?.data?.accessToken && result?.data?.user) {
+          setAccessToken(result.data.accessToken);
+          setAuth(result.data.user, result.data.accessToken);
+          router.push("/dashboard/explore");
+          return;
+        }
+        router.push("/auth/login");
+      }}
       purpose="signup"
     />
   );

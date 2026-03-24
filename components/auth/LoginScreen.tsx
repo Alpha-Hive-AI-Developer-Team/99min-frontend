@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@/components/ui";
 import { Toast } from "@/components/ui/Toast";
 import { AuthPageLayout, AuthHeader, AuthFormFooter } from "./shared";
+import OtpModal from "@/components/auth/OtpModal";
 import { authApi } from "@/utils/api/auth.api";
 import { useAuth } from "@/store/auth-context";
 import { setAccessToken } from "@/utils/api";
@@ -25,6 +26,8 @@ const LoginScreen: React.FC = () => {
   const { tr } = useI18n();
   const router = useRouter();
   const { setAuth } = useAuth();
+  const [step, setStep] = useState<"form" | "otp">("form");
+  const [emailForOtp, setEmailForOtp] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const {
@@ -52,8 +55,12 @@ const LoginScreen: React.FC = () => {
 
       if (message.includes("No account found")) {
         showToast(tr(en.auth.accountNotFound), "error");
-      } else if (message.includes("not verified")) {
-        showToast("Please verify your email first. Check your inbox for the OTP.", "warning");
+      } else if (
+        message.toLowerCase().includes("not verified") ||
+        message.toLowerCase().includes("verify your email")
+      ) {
+        setEmailForOtp(data.email.trim());
+        setStep("otp");
       } else if (message.includes("Google") || message.includes("Facebook")) {
         showToast(message, "warning");
       } else if (message.includes("Invalid email or password")) {
@@ -63,6 +70,25 @@ const LoginScreen: React.FC = () => {
       }
     }
   };
+
+  if (step === "otp") {
+    return (
+      <OtpModal
+        email={emailForOtp}
+        onBack={() => setStep("form")}
+        onVerify={(result) => {
+          if (result?.data?.accessToken && result?.data?.user) {
+            setAccessToken(result.data.accessToken);
+            setAuth(result.data.user, result.data.accessToken);
+            router.push("/dashboard/explore");
+            return;
+          }
+          router.push("/auth/login");
+        }}
+        purpose="signup"
+      />
+    );
+  }
 
   return (
     <AuthPageLayout backButtonHref="/" contentMaxWidth="sm" contentClassName="justify-center">
