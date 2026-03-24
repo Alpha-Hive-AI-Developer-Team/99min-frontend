@@ -10,11 +10,12 @@ import { AuthPageLayout } from "./shared";
 import { authApi } from "@/utils/api/auth.api";
 import { otpSchema, OtpFormData } from "@/validators/auth-schema";
 import { useI18n } from "@/contexts/i18n-context";
+import type { AuthResponse } from "@/utils/api/auth.api";
 
 interface OtpModalProps {
   email?: string;
   onBack?: () => void;
-  onVerify?: () => void;
+  onVerify?: (result?: AuthResponse) => void;
   purpose?: "signup" | "password_reset";
 }
 
@@ -26,7 +27,7 @@ const OtpModal: React.FC<OtpModalProps> = ({
 }) => {
   const { tr } = useI18n();
   const [apiError, setApiError] = useState("");
-  const [resendSeconds, setResendSeconds] = useState(55);
+  const [resendSeconds, setResendSeconds] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
   const {
@@ -62,13 +63,25 @@ const OtpModal: React.FC<OtpModalProps> = ({
     setApiError("");
     try {
       if (purpose === "signup") {
-        await authApi.verifySignupOtp({ email, otp: data.otp });
+        const result = await authApi.verifySignupOtp({ email, otp: data.otp });
+        onVerify?.(result);
       } else {
         await authApi.verifyResetOtp({ email, otp: data.otp });
+        onVerify?.();
       }
-      onVerify?.();
     } catch (err: unknown) {
-      setApiError(err instanceof Error ? err.message : "Invalid OTP");
+      const message = err instanceof Error ? err.message : "Invalid OTP";
+      const normalized = message.toLowerCase();
+
+      if (
+        normalized.includes("already verified") ||
+        normalized.includes("otp already verified")
+      ) {
+        onVerify?.();
+        return;
+      }
+
+      setApiError(message);
       setValue("otp", "", { shouldValidate: false });
     }
   };
@@ -77,7 +90,7 @@ const OtpModal: React.FC<OtpModalProps> = ({
     if (!canResend || !email) return;
     setApiError("");
     setCanResend(false);
-    setResendSeconds(55);
+    setResendSeconds(60);
     try {
       if (purpose === "signup") {
         await authApi.resendSignupOtp({ email });
