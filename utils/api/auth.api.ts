@@ -15,6 +15,7 @@ export interface User {
 
 export interface AuthResponse {
   success: boolean;
+  message?: string;
   data: {
     user: User;
     accessToken: string;
@@ -31,7 +32,7 @@ export const authApi = {
     }),
 
   verifySignupOtp: (payload: { email: string; otp: string }) =>
-    request<{ success: boolean; message: string }>(
+    request<AuthResponse>(
       "/api/auth/verify-signup-otp",
       { method: "POST", body: JSON.stringify(payload) }
     ),
