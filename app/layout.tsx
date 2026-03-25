@@ -5,6 +5,7 @@ import { AuthProvider } from "@/store/auth-context";
 import SilentRefreshInit from "@/components/auth/SilentRefresh";
 import QueryProvider from "@/providers/QueryProvider";
 import { NextIntlClientProvider } from "next-intl";
+import { I18nProvider } from "@/contexts/i18n-context";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -18,18 +19,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NextIntlClientProvider>
-          <QueryProvider>
-            <AuthProvider>
-               <SilentRefreshInit> 
-              {children}
-               </SilentRefreshInit>
-            </AuthProvider>
-          </QueryProvider>
+          <I18nProvider>
+            <QueryProvider>
+              <AuthProvider>
+                <SilentRefreshInit>
+                  {children}
+                </SilentRefreshInit>
+              </AuthProvider>
+            </QueryProvider>
+          </I18nProvider>
         </NextIntlClientProvider>
       </body>
     </html>
