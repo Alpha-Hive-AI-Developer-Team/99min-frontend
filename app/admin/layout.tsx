@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import AdminSidebar from '@/components/admin/dashboard/AdminSidebar';
-import AdminTopNav from '@/components/admin/dashboard/AdminTopNav';
+import AdminSidebar from '../../components/admin/dashboard/AdminSidebar';
+import AdminTopNav from '../../components/admin/dashboard/AdminTopNav';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-screen bg-white font-sans text-gray-900">
+    <div className="flex h-screen bg-white font-sans text-textBlack">
 
       <AdminSidebar />
 
@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <AdminTopNav />
 
         {/* Page Content */}
-        <main className="flex-1 p-8 bg-[#F8FAFC] overflow-y-auto">
+        <main className="flex-1 p-8 bg-inputBg overflow-y-auto">
           {children}
         </main>
       </div>

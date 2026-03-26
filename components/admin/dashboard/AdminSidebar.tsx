@@ -27,12 +27,12 @@ export default function AdminSidebar() {
     },
     {
       label: 'User',
-      href: '#',
+      href: '/admin/dashboard/user',
       icon: <MapPin className="w-5 h-5" />,
     },
     {
       label: 'Role & Admin',
-      href: '#',
+      href: '/admin/dashboard/role-admin',
       icon: <ClipboardCheck className="w-5 h-5" />,
     },
     {
