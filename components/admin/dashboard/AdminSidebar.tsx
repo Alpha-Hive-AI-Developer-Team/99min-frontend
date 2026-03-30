@@ -74,12 +74,12 @@ export default function AdminSidebar() {
       className="object-contain shrink-0"
     />
   ) : (
-   <div className="flex items-center gap-3 w-full px-6">
-  <div className="scale-50 origin-left">
-    <TicketBadge />
-  </div>
-  <span className="font-bold text-[20px] whitespace-nowrap">99Min Admin</span>
-</div>
+    <div className="flex items-center gap-3 w-full px-6">
+      <div className="scale-50 origin-left">
+        <TicketBadge />
+      </div>
+      <span className="font-bold text-[20px] whitespace-nowrap">99Min Admin</span>
+    </div>
   )}
 </div>
 
