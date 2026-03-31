@@ -30,7 +30,7 @@ type I18nContextValue = {
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState("de");
+  const [locale, setLocaleState] = useState("en");
   const localeRef = useRef(locale);
   useEffect(() => {
     localeRef.current = locale;
