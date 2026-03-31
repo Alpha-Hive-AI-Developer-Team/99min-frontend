@@ -225,10 +225,10 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
         required
       />
 
-      <CategorySelector
+      {/* <CategorySelector
         selectedCategory={formData.category}
         onCategoryChange={(category) => handleChange('category', category)}
-      />
+      /> */}
 
       <Input
         label={tr("Budget")}

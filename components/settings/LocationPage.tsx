@@ -20,7 +20,71 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
   const { settings, loading, error, handleUpdate } = useLocationSettings();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [geoLocation, setGeoLocation] = React.useState<{
+    label: string;
+    coords: string;
+  } | null>(null);
+  const [geoError, setGeoError] = React.useState<string | null>(null);
+  const [geoLoading, setGeoLoading] = React.useState(false);
+
   const quickSelectOptions = [5, 10, 25, 50];
+
+  const fetchCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGeoError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setGeoLoading(true);
+    setGeoError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          );
+          const data = await res.json();
+          const label =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            data.display_name ||
+            "Current Location";
+
+          setGeoLocation({
+            label,
+            coords: `${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° W`,
+          });
+        } catch {
+          setGeoLocation({
+            label: "Current Location",
+            coords: `${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° W`,
+          });
+        }
+
+        setGeoLoading(false);
+      },
+      (err) => {
+        setGeoError(
+          err.code === 1
+            ? "Location access denied. Please allow location in your browser."
+            : "Unable to retrieve your location."
+        );
+        setGeoLoading(false);
+      }
+    );
+  }, []);
+
+  const handleAutoDetectChange = useCallback(
+    (val: boolean) => {
+      handleUpdate({ autoDetect: val });
+      if (val) fetchCurrentLocation();
+    },
+    [handleUpdate, fetchCurrentLocation]
+  );
 
   const handleRadiusChange = useCallback(
     (val: number) => {
@@ -54,13 +118,17 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
           <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{tr(error)}</div>
         )}
 
+        {geoError && (
+          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{geoError}</div>
+        )}
+
         <div>
           <LocationToggleCard
             icon={<Navigation className="w-5 h-5" />}
             title="Auto-detect Location"
-            description="Use your current location"
+            description={geoLoading ? "Detecting location..." : "Use your current location"}
             enabled={settings?.autoDetect ?? false}
-            onChange={(val) => handleUpdate({ autoDetect: val })}
+            onChange={handleAutoDetectChange}
           />
         </div>
 
@@ -68,8 +136,8 @@ const LocationPage: React.FC<LocationPageProps> = ({ onBack }) => {
           <div className="px-4 py-4">
             <LocationCard
               icon={<MapPin className="w-5 h-5" />}
-              location="New York, NY"
-              coordinates="40.7128° N, 74.0060° W"
+              location={geoLocation?.label ?? "No location detected"}
+              coordinates={geoLocation?.coords ?? "Enable auto-detect above"}
             />
           </div>
         </SettingsSection>
