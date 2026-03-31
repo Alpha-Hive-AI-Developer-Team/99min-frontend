@@ -67,19 +67,19 @@ export default function AdminSidebar() {
 <div className="h-[72px] flex items-center justify-center px-0 overflow-hidden">
   {collapsed ? (
     <Image
-      src="/assets/images/logo.png"
+      src="/assets/images/ticketIcon.svg"
       alt="99 Mint"
       width={32}
       height={32}
       className="object-contain shrink-0"
     />
   ) : (
-   <div className="flex items-center gap-3 w-full px-6">
-  <div className="scale-50 origin-left">
-    <TicketBadge />
-  </div>
-  <span className="font-bold text-[20px] whitespace-nowrap">99Min Admin</span>
-</div>
+    <div className="flex items-center gap-3 w-full px-6">
+      <div className="scale-50 origin-left">
+        <TicketBadge />
+      </div>
+      <span className="font-bold text-[20px] whitespace-nowrap">99Min Admin</span>
+    </div>
   )}
 </div>
 
