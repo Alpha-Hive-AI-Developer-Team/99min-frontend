@@ -12,6 +12,7 @@ import React, {
 import {
   EN_MESSAGES,
   getMessagesForLocale,
+  LANGUAGE_NAMES,
   type MessageKey,
 } from "@/lib/ui-messages";
 
@@ -22,23 +23,11 @@ type I18nContextValue = {
   locale: string;
   setLocale: (locale: string) => void;
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
-  /**
-   * Translate an arbitrary UI string from English -> the active UI locale.
-   * Returns the original string until the translation finishes (cached thereafter).
-   */
   tr: (text: string) => string;
   languageLabel: (languageCode: string) => string;
 };
 
 const I18nContext = createContext<I18nContextValue | null>(null);
-
-function safeDisplayNames(locale: string): Intl.DisplayNames {
-  try {
-    return new Intl.DisplayNames([locale], { type: "language" });
-  } catch {
-    return new Intl.DisplayNames(["en"], { type: "language" });
-  }
-}
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState("de");
@@ -60,7 +49,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Load per-locale translation cache for arbitrary UI strings.
     try {
       const raw = localStorage.getItem(`${TEXT_TRANSLATION_STORAGE_PREFIX}:${locale}`);
       if (!raw) {
@@ -99,14 +87,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const languageLabel = useCallback(
     (languageCode: string) => {
-      const dn = safeDisplayNames(locale);
-      try {
-        return dn.of(languageCode) ?? languageCode;
-      } catch {
-        return languageCode;
-      }
+      return LANGUAGE_NAMES[languageCode] ?? languageCode;
     },
-    [locale],
+    [],
   );
 
   const ensureTextTranslation = useCallback(
@@ -135,7 +118,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         try {
           if (localeRef.current !== nextLocale) return;
           setTextTranslations((prev) => {
-            if (prev[text]) return prev; // already cached
+            if (prev[text]) return prev;
             const next = { ...prev, [text]: translated };
             try {
               localStorage.setItem(
@@ -162,14 +145,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const tr = useCallback(
     (text: string) => {
       if (!text) return text;
-      // `tr` translates arbitrary UI text from English -> active locale.
-      // If we're already in English, return as-is.
       if (locale === "en") return text;
 
       const cached = textTranslations[text];
       if (cached) return cached;
 
-      // Best-effort: kick off translation, but keep UI responsive.
       ensureTextTranslation(text, locale);
       return text;
     },

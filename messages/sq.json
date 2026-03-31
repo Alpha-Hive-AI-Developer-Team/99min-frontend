@@ -241,7 +241,18 @@
     "loadMore": "Load more",
     "category": "Category",
     "taskNotFound": "Task not found",
-    "goBack": "Go back"
+    "goBack": "Go back",
+    "loadingTasks": "Duke ngarkuar detyrat...",
+  "interest": "të interesuar",
+  "shareAd": "Ndaj Njoftimin",
+  "reportAd": "Raporto Njoftimin",
+  "sendMessage": "Dërgo Mesazh",
+  "messagePlaceholder": "Shkruaj mesazhin tënd...",
+  "send": "Dërgo",
+  "editTask": "Ndrysho Detyrën",
+  "deleteTask": "Fshi Detyrën",
+  "openingChat": "Po hap bisedën...",
+  "sending": "Po dërgon..."
   },
   "common": {
     "cancel": "Cancel",
