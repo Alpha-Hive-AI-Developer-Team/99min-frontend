@@ -1,24 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { AuthLayout } from "@/components/admin/auth/AuthLayout";
 import { AuthInput, PrimaryButton } from "@/components/admin/auth/AuthComponents";
-
-const schema = z
-  .object({
-    newPassword: z.string().min(8, "Must be at least 8 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-  })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type FormData = z.infer<typeof schema>;
+import { adminAuthApi } from "@/utils/api/admin.auth.api";
+import { adminResetPasswordSchema, AdminResetPasswordFormData } from "@/validators/admin-auth-schema";
 
 const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"] as const;
 const strengthBarColors = ["", "bg-red-400", "bg-yellow-400", "bg-blue-400", "bg-green-500"] as const;
@@ -27,19 +16,24 @@ const strengthTextColors = ["", "text-red-500", "text-yellow-500", "text-blue-50
 const NewPasswordScreen: React.FC = () => {
   const router = useRouter();
 
+  useEffect(() => {
+    const token = sessionStorage.getItem("adminResetToken");
+    if (!token) router.replace("/admin/auth/forgot-password");
+  }, [router]);
+
   const {
     register,
     handleSubmit,
     control,
+    setError,
     formState: { errors, isSubmitting, isValid },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<AdminResetPasswordFormData>({
+    resolver: zodResolver(adminResetPasswordSchema),
     mode: "onChange",
     defaultValues: { newPassword: "", confirmPassword: "" },
   });
 
   const newPassword = useWatch({ control, name: "newPassword" }) ?? "";
-
   const strength = [
     newPassword.length >= 8,
     /[A-Z]/.test(newPassword),
@@ -47,9 +41,21 @@ const NewPasswordScreen: React.FC = () => {
     /[^A-Za-z0-9]/.test(newPassword),
   ].filter(Boolean).length;
 
-  const onSubmit = async (data: FormData) => {
-    console.log("Set new password:", data.newPassword);
-    router.push("/auth/password-updated");
+  const onSubmit = async (data: AdminResetPasswordFormData) => {
+    const resetToken = sessionStorage.getItem("adminResetToken");
+    if (!resetToken) {
+      router.replace("/admin/auth/forgot-password");
+      return;
+    }
+    try {
+      await adminAuthApi.resetPassword({ resetToken, newPassword: data.newPassword });
+      sessionStorage.removeItem("adminResetToken");
+      sessionStorage.removeItem("adminResetEmail");
+      router.push("/admin/auth/password-updated");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "";
+      setError("root", { message: message || "Something went wrong. Please try again." });
+    }
   };
 
   return (
@@ -59,10 +65,15 @@ const NewPasswordScreen: React.FC = () => {
           Create New Password
         </h1>
         <p className="text-sm text-gray-500 leading-relaxed">
-          Create a secure new password to protect your account and keep your
-          information safe always.
+          Create a secure new password to protect your account.
         </p>
       </div>
+
+      {errors.root && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm text-red-600">{errors.root.message}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="w-full">
         <AuthInput

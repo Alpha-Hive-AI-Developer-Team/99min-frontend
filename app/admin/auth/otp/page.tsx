@@ -2,5 +2,5 @@
 import OtpScreen from "@/components/admin/auth/Otp";
 
 export default function OtpPage() {
-  return <OtpScreen purpose="forgot-password" />;
+  return <OtpScreen />;
 }

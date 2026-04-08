@@ -2,7 +2,10 @@
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-const PUBLIC_PATHS = ["/auth/login", "/auth/signup", "/auth/forgot-password", "/auth/verify-otp"];
+const PUBLIC_PATHS = ["/auth/login", "/auth/signup", "/auth/forgot-password", "/auth/verify-otp", "/admin/auth/login",   
+  "/admin/auth/forgot-password",
+  "/admin/auth/verify-otp",
+  "/admin/auth/reset-password",];
 
 let accessToken: string | null = null;
 
@@ -73,7 +76,7 @@ export async function request<T>(
 
 if (res.status === 401) {
   // Don't try to refresh on auth endpoints — just let the error bubble
-  const isAuthEndpoint = endpoint.includes("/api/auth/");
+  const isAuthEndpoint = endpoint.includes("/api/auth/") ||   endpoint.includes("/api/admin/auth/");
   
   if (!isAuthEndpoint) {
     const refreshed = await silentRefresh();

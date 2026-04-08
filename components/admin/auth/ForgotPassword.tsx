@@ -1,33 +1,38 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { AuthLayout } from "@/components/admin/auth/AuthLayout";
 import { AuthInput, PrimaryButton, OutlineButton } from "@/components/admin/auth/AuthComponents";
-
-const schema = z.object({
-  email: z.string().min(1, "Email is required").email("Enter a valid email"),
-});
-type FormData = z.infer<typeof schema>;
+import { adminAuthApi } from "@/utils/api/admin.auth.api";
+import { adminForgotPasswordSchema, AdminForgotPasswordFormData } from "@/validators/admin-auth-schema";
 
 const ForgotPasswordScreen: React.FC = () => {
   const router = useRouter();
+  const [error, setError] = useState("");
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<AdminForgotPasswordFormData>({
+    resolver: zodResolver(adminForgotPasswordSchema),
     mode: "onChange",
   });
 
-  const onSubmit = async (data: FormData) => {
-    console.log("Send reset code to:", data.email);
-    router.push("/auth/otp");
+  const onSubmit = async (data: AdminForgotPasswordFormData) => {
+    setError("");
+    try {
+      await adminAuthApi.forgotPassword(data);
+      // Store email for OTP screen
+      sessionStorage.setItem("adminResetEmail", data.email);
+      router.push("/admin/auth/otp");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "";
+      setError(message || "Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -37,10 +42,15 @@ const ForgotPasswordScreen: React.FC = () => {
           Forgot Password
         </h1>
         <p className="text-sm text-gray-500 leading-relaxed">
-          Enter your email and we will send you a verification code to get back
-          into your account.
+          Enter your email and we will send you a verification code.
         </p>
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="w-full">
         <div className="mb-6 sm:mb-8">
@@ -54,11 +64,7 @@ const ForgotPasswordScreen: React.FC = () => {
         </div>
 
         <div className="flex gap-3">
-          <OutlineButton
-            type="button"
-            onClick={() => router.back()}
-            className="flex-1"
-          >
+          <OutlineButton type="button" onClick={() => router.back()} className="flex-1">
             Back
           </OutlineButton>
           <PrimaryButton
