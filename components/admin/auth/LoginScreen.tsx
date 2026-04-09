@@ -5,37 +5,48 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { AuthLayout } from "@/components/admin/auth/AuthLayout";
 import { AuthInput, PrimaryButton } from "@/components/admin/auth/AuthComponents";
-
-const schema = z.object({
-  email: z.string().min(1, "Email is required").email("Enter a valid email"),
-  password: z.string().min(1, "Password is required"),
-});
-type FormData = z.infer<typeof schema>;
+import { adminAuthApi } from "@/utils/api/admin.auth.api";
+import { useAdminAuth } from "@/store/admin-auth-context";
+import { setAccessToken } from "@/utils/api/client";
+import { adminLoginSchema, AdminLoginFormData } from "@/validators/admin-auth-schema";
 
 const LoginScreen: React.FC = () => {
   const router = useRouter();
-  const [rememberMe, setRememberMe] = useState(false);
+  const { setAdminAuth } = useAdminAuth();
+  const [error, setError] = useState("");
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<AdminLoginFormData>({
+    resolver: zodResolver(adminLoginSchema),
     mode: "onChange",
   });
 
-  const onSubmit = async (data: FormData) => {
-    console.log("Login:", data, "Remember:", rememberMe);
-    router.push("/admin/dashboard");
+  const onSubmit = async (data: AdminLoginFormData) => {
+    setError("");
+    try {
+      const res = await adminAuthApi.login(data);
+      setAccessToken(res.data.accessToken);
+      setAdminAuth(res.data.admin, res.data.accessToken);
+      router.push("/admin/dashboard");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "";
+      if (message.includes("Invalid email or password")) {
+        setError("Invalid email or password.");
+      } else if (message.includes("Admin accounts only")) {
+        setError("This account does not have admin access.");
+      } else {
+        setError(message || "Something went wrong. Please try again.");
+      }
+    }
   };
 
   return (
     <AuthLayout bgImage="/assets/images/login.png" bgAlt="Login background">
-      {/* Header */}
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mb-2">
           Log in
@@ -45,7 +56,12 @@ const LoginScreen: React.FC = () => {
         </p>
       </div>
 
-      {/* Form */}
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="w-full">
         <AuthInput
           label="Email"
@@ -63,18 +79,7 @@ const LoginScreen: React.FC = () => {
           {...register("password")}
         />
 
-        {/* Remember me + Forgot password */}
-        <div className="flex items-center justify-between mb-6 mt-1 gap-2 flex-wrap">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 accent-orange-500 cursor-pointer"
-            />
-            <span className="text-sm text-gray-500">Remember for 30 days</span>
-          </label>
-
+        <div className="flex justify-end mb-6 mt-1">
           <Link
             href="/admin/auth/forgot-password"
             className="text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors"
@@ -83,11 +88,7 @@ const LoginScreen: React.FC = () => {
           </Link>
         </div>
 
-        <PrimaryButton
-          type="submit"
-          loading={isSubmitting}
-          disabled={!isValid || isSubmitting}
-        >
+        <PrimaryButton type="submit" loading={isSubmitting} disabled={!isValid || isSubmitting}>
           {isSubmitting ? "Logging in..." : "Log in"}
         </PrimaryButton>
       </form>
