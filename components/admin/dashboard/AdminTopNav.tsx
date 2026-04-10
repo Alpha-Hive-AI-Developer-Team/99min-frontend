@@ -43,7 +43,7 @@ export default function AdminTopNav({
       <div ref={searchRef} className="relative flex-1 max-w-[420px]">
 
         {/* DESKTOP SEARCH BAR */}
-        <div className="hidden sm:flex items-center h-11 rounded-lg bg-inputBg overflow-hidden focus-within:ring-2 focus-within:ring-orange transition-all">
+        {/* <div className="hidden sm:flex items-center h-11 rounded-lg bg-inputBg overflow-hidden focus-within:ring-2 focus-within:ring-orange transition-all">
           <div className="grid place-items-center w-12 text-textGray">
             <Search className="w-5 h-5" />
           </div>
@@ -52,18 +52,18 @@ export default function AdminTopNav({
             type="text"
             placeholder="Search here..."
           />
-        </div>
+        </div> */}
 
         {/* MOBILE ICON ONLY */}
-        <button
+        {/* <button
           onClick={() => setOpenSearch((prev) => !prev)}
           className="sm:hidden p-2 rounded-lg border border-gray-200 text-textGray"
         >
           <Search className="w-5 h-5" />
-        </button>
+        </button> */}
 
         {/* DROPDOWN (mobile search) */}
-        {openSearch && (
+        {/* {openSearch && (
           <div className="absolute top-[52px] left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden sm:hidden">
             <div className="p-2">
               <input
@@ -83,8 +83,8 @@ export default function AdminTopNav({
               ))}
             </div>
           </div>
-        )}
-      </div>
+        )}*/}
+      </div> 
 
       {/* PROFILE */}
       <div ref={profileRef} className="relative">

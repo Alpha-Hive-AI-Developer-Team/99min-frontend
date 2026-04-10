@@ -79,16 +79,16 @@ function DropdownFilter({ filter }: { filter: ToolbarFilter }) {
 }
 
 export default function TableToolbar({
-  searchValue,
-  onSearchChange,
-  searchPlaceholder = "Search...",
+  // searchValue,
+  // onSearchChange,
+  // searchPlaceholder = "Search...",
   filters = [],
 }: TableToolbarProps) {
   return (
     <div className="w-full mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
 
       {/* SEARCH */}
-      <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-orange/30 transition w-full sm:w-[224px]">
+      {/* <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-orange/30 transition w-full sm:w-[224px]">
         <Search className="w-4 h-4 text-textGray shrink-0" />
         <input
           type="text"
@@ -97,14 +97,15 @@ export default function TableToolbar({
           placeholder={searchPlaceholder}
           className="flex-1 min-w-0 text-sm text-textBlack placeholder:text-textGray bg-transparent focus:outline-none"
         />
-      </div>
+      </div> */}
 
-      {/* FILTERS */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-        {filters.map((f) => (
-          <DropdownFilter key={f.placeholder} filter={f} />
-        ))}
-      </div>
-    </div>
+        {/* FILTERS */}
+  <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto sm:ml-auto">
+    {filters.map((f) => (
+      <DropdownFilter key={f.placeholder} filter={f} />
+    ))}
+  </div>
+
+</div>
   );
 }
